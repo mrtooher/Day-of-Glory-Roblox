@@ -116,6 +116,29 @@ Config.Powers = {
 	},
 }
 
+-- Map (placeholder arena; MapService builds it if Workspace has no "Arena") --
+-- Field runs along X. Red owns X < centerX, Blue owns X > centerX.
+Config.Map = {
+	centerX = 0,
+	neutralHalfWidth = 1, -- center strip where nobody can tag
+	negativeSideTeam = "Red",
+	positiveSideTeam = "Blue",
+	fieldLength = 200,
+	fieldWidth = 90,
+	wallHeight = 8,
+	pantryX = 88, -- distance from center line
+	dropoffX = 70,
+	dropoffZ = 22,
+	spawnX = 92,
+	spawnZ = -24,
+	burgerSpawns = { { x = 0, z = 25 }, { x = 0, z = -25 } },
+}
+
+Config.FoodPickupRadius = 4 -- studs from a food piece to grab/touch it
+Config.DropoffRadius = 6
+Config.BurgerPickupRadius = 4
+Config.ProjectileHitRadius = 3
+
 -- Bots ----------------------------------------------------------------------
 Config.Bots = {
 	repathSeconds = 0.75,
