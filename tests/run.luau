@@ -16,7 +16,7 @@ local specs: { [string]: any } = {
 	["Rules/TeamPick.spec"] = require("./Rules/TeamPick.spec"),
 	["Rules/Territory.spec"] = require("./Rules/Territory.spec"),
 	["Rules/Movement.spec"] = require("./Rules/Movement.spec"),
-	["Rules/Cooldown.spec"] = require("./Rules/Cooldown.spec"),
+	["Powers/Powers.spec"] = require("./Powers/Powers.spec"),
 	["Rules/BotBrain.spec"] = require("./Rules/BotBrain.spec"),
 	["Config.spec"] = require("./Config.spec"),
 }
