@@ -21,6 +21,12 @@
     },
     "Teams": {
       "$className": "Teams"
+    },
+    "TextChatService": {
+      "$className": "TextChatService",
+      "$properties": {
+        "ChatVersion": "TextChatService"
+      }
     }
   }
 }
