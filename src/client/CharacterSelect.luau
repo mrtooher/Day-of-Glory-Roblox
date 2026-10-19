@@ -49,7 +49,7 @@ function CharacterSelect.start()
 
 	local status = Instance.new("TextLabel")
 	status.Name = "Status"
-	status.Size = UDim2.new(1, 0, 0, 30)
+	status.Size = UDim2.new(1, -60, 0, 30) -- leave room for the X
 	status.BackgroundTransparency = 1
 	status.Font = Enum.Font.GothamBold
 	status.TextScaled = true
@@ -61,8 +61,9 @@ function CharacterSelect.start()
 	local closeBtn = Instance.new("TextButton")
 	closeBtn.Name = "Close"
 	closeBtn.AnchorPoint = Vector2.new(1, 0)
-	closeBtn.Position = UDim2.new(1, -10, 0, 10)
-	closeBtn.Size = UDim2.fromOffset(30, 30)
+	closeBtn.Position = UDim2.new(1, -6, 0, 4)
+	closeBtn.Size = UDim2.fromOffset(40, 40)
+	closeBtn.ZIndex = 10 -- always drawn above the title and grid
 	closeBtn.Font = Enum.Font.GothamBlack
 	closeBtn.TextScaled = true
 	closeBtn.Text = "X"
@@ -83,14 +84,20 @@ function CharacterSelect.start()
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = grid
 
+	-- The CHARACTER button doubles as a close button while the panel is open.
+	local function setOpen(open: boolean)
+		panel.Visible = open
+		openBtn.Text = if open then "CLOSE" else "CHARACTER"
+	end
+
 	local function closePanel()
-		panel.Visible = false
+		setOpen(false)
 	end
 
 	closeBtn.Activated:Connect(closePanel)
 
 	openBtn.Activated:Connect(function()
-		panel.Visible = not panel.Visible
+		setOpen(not panel.Visible)
 	end)
 
 	-- FIX: Bind Esc and Gamepad B to close the panel
