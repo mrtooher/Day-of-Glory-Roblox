@@ -48,7 +48,21 @@ Stage 6: double-check panel.
 | 16 | 5 | same run: HUD | PASS | `RED 2/10  BLUE 1/10` at 8:01; feed line small (`Bot 1 scored for Red! (2/10)`); `+1 NICE DELIVERY!` banner ~half previous size |
 | 17 | 5 | same run: screenshot inside Pizza Palace | FAIL | white counter/floor tiles/Cook outfit still blown out; `SWITCH CHARACTER HERE` billboard overlaps the banner → all map PointLights ×0.45 brightness ×0.8 range; switch sign 220×40 → 130×22, text `SWITCH CHARACTER` |
 | 18 | 5 | after fix: `luau-lsp` + `lune run tests/run` + arena check + build | PASS | `lsp exit=0` · `TOTAL: 134 passed, 0 failed` · `ARENA CHECK: 92 passed, 0 failed` |
+| 19 | 5 | Studio run 2 (after light fix): screenshot inside Taco Town | PASS | marble counter texture visible, food on counter readable, `SWITCH CHARACTER` sign small; no wash-out |
+| 20 | 5 | same run: Pizza Palace view after fix | UNVERIFIABLE | could not bring the Red client window forward (cmd+` / clicks stayed on the Blue client) |
+| 21 | 1,5 | same run: server log `[Food]` | PASS | `Bot 6 grabbed RED's taco!` (base counter) + `Bot 5/6 grabbed RED's sushi!` (roof) · `0` CreatorError on server + 2 clients |
+| 22 | 3 | beacon audible | UNVERIFIABLE | no audio capture here; `rbxasset://sounds/volume_slider.ogg` exists in Studio content (listed); no "Failed to load sound" in client logs |
 
 ## Double-check
 
+## Self-review (step 4)
+
+- Caught by checking prompts against code (row 10): two Qwen prompts referenced a Looks colour field and a Remotes creation style that don't exist; fixed before delivery.
+- Caught in Studio (row 17): interior wash-out survived the earlier lighting fix → damped all map PointLights.
+
 ## Open items
+
+- **Beacon sound** not heard by anyone yet (row 22). Uses the Roblox built-in settings-slider tick; Jim may prefer a custom ping (set `Config.Audio.sfx.beacon`).
+- **Pizza Palace lighting** after the light damping not seen (row 20); Taco Town confirmed fine.
+- **Human on the stairs/roofs** not driven by hand; bots climbed all four roofs' stairs in logs (rows 14, 21) except Burger Joint grabs were Blue-side bots on the Arcade… Red Burger Joint roof grab not yet in logs.
+- **Jim's "go live on fortnite"**: this game is built for Roblox (Luau/Rojo). Fortnite uses UEFN + Verse; nothing here ports directly. Needs Jim to confirm which platform.
