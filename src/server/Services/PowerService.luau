@@ -1,8 +1,4 @@
 --!strict
--- Server-authoritative powers. Clients only send "use my power"; the server
--- checks the cooldown (PowerBase), builds a ctx from server-side positions and
--- runs the pure power module.
-
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
@@ -33,7 +29,6 @@ function PowerService.powerIdFor(characterId: string): string
 	return id
 end
 
--- Give the actor a fresh power instance for its current character.
 function PowerService.assign(actor: Actor)
 	local id = PowerService.powerIdFor(actor.characterId)
 	actor.power = PowerBase.new(Powers.definitions[id], Config.Powers[id])
@@ -94,6 +89,11 @@ local function makeCtx(actor: Actor): PowerBase.Ctx
 			local a = resolve(view)
 			if a then
 				StatusService.apply(a, kind, seconds, multiplier)
+				if kind == "freeze" then
+					-- Cop's STUN GUN: taser bolt from the Cop to the target.
+					Effects.zap(Actors.position(actor), Actors.position(a), Color3.fromRGB(255, 240, 60))
+					Remotes.event(Net.PlayPowerFx):FireAllClients(a.model, "Whistle", { action = "hit", announcement = "STUNNED!" })
+				end
 			end
 		end,
 		setVanished = function(view, seconds)
@@ -117,7 +117,6 @@ local function makeCtx(actor: Actor): PowerBase.Ctx
 	}
 end
 
--- Returns whether the power fired (and the reason when it didn't).
 function PowerService.tryUse(actor: Actor): (boolean, string?)
 	if not MatchService.isPlaying() then
 		return false, "not playing"
@@ -129,9 +128,8 @@ function PowerService.tryUse(actor: Actor): (boolean, string?)
 	local ok, reason = actor.power:tryActivate(makeCtx(actor), now)
 	if ok then
 		actor.model:SetAttribute("PowerReadyAt", now + actor.power:remaining(now))
-		if actor.power.definition.id == "Yell" then
-			Effects.flash(Actors.position(actor), Config.Powers.Yell.radius, Color3.fromRGB(255, 80, 80))
-		end
+		local announcement = if actor.power.definition.id == "Yell" then "KNOCKED BACK!" else nil
+		Remotes.event(Net.PlayPowerFx):FireAllClients(actor.model, actor.power.definition.id, { action = "activate", announcement = announcement })
 	end
 	return ok, reason
 end

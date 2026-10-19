@@ -1,20 +1,17 @@
 --!strict
--- Server-simulated projectiles, grease traps and simple visual flashes.
--- Projectiles are anchored Parts moved on Heartbeat, so hits are decided by
--- the server, not by client physics.
-
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
+local Net = require(ReplicatedStorage.Shared.Net)
+local Remotes = require(script.Parent.Remotes)
 local Actors = require(script.Parent.Actors)
+local StatusService: any
 type Actor = Actors.Actor
 
 local Effects = {}
-
-local StatusService: any
 local folder: Folder
 local trapsByOwner: { [string]: number } = {}
 
@@ -28,8 +25,6 @@ function Effects.start()
 	folder.Parent = Workspace
 end
 
--- Enemies of `owner` within `radius` of `pos` that can currently be hit.
--- A vanished enemy can't be targeted unless Dog's SNIFF revealed it.
 function Effects.enemiesNear(owner: Actor, pos: Vector3, radius: number): { Actor }
 	local now = Actors.now()
 	local revealed = StatusService.isRevealedTo(owner.team, now)
@@ -60,6 +55,26 @@ function Effects.flash(pos: Vector3, radius: number, color: Color3)
 	Debris:AddItem(p, 0.4)
 end
 
+-- A short glowing bolt between two points (Cop's stun gun).
+function Effects.zap(from: Vector3, to: Vector3, color: Color3)
+	local length = (to - from).Magnitude
+	if length < 0.1 then
+		return
+	end
+	local p = Instance.new("Part")
+	p.Name = "Zap"
+	p.Size = Vector3.new(0.3, 0.3, length)
+	p.CFrame = CFrame.lookAt(from, to) * CFrame.new(0, 0, -length / 2)
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.Material = Enum.Material.Neon
+	p.Color = color
+	p.Parent = folder
+	Debris:AddItem(p, 0.2)
+end
+
 type ProjectileSpec = {
 	kind: string,
 	speed: number,
@@ -83,10 +98,42 @@ function Effects.launchProjectile(owner: Actor, spec: ProjectileSpec)
 		p.Size = Vector3.new(1.5, 1.5, 1.5)
 		p.Material = Enum.Material.Neon
 		p.Color = Color3.fromRGB(255, 110, 30)
-	else
+		
+		local trail = Instance.new("Trail")
+		trail.Color = ColorSequence.new(Color3.fromRGB(255, 150, 50), Color3.fromRGB(255, 50, 0))
+		trail.WidthScale = NumberSequence.new(1, 0)
+		trail.Lifetime = 0.3
+		trail.Parent = p
+		local att0 = Instance.new("Attachment")
+		att0.Parent = p
+		local att1 = Instance.new("Attachment")
+		att1.Position = Vector3.new(0, 0, -1.5)
+		att1.Parent = p
+		trail.Attachment0 = att0
+		trail.Attachment1 = att1
+	elseif spec.kind == "Whistle" then
 		p.Shape = Enum.PartType.Cylinder
-		p.Size = Vector3.new(0.3, 2.5, 2.5)
+		p.Size = Vector3.new(0.2, 1.5, 0.2)
+		p.Color = Color3.fromRGB(255, 255, 0)
+		p.Material = Enum.Material.Neon
+		
+		local beam = Instance.new("Beam")
+		beam.Color = ColorSequence.new(Color3.fromRGB(255, 255, 100))
+		beam.Width0 = 0.5
+		beam.Width1 = 0.5
+		beam.Parent = p
+		local att0 = Instance.new("Attachment")
+		att0.Parent = p
+		local att1 = Instance.new("Attachment")
+		att1.Position = Vector3.new(0, 0, -1.5)
+		att1.Parent = p
+		beam.Attachment0 = att0
+		beam.Attachment1 = att1
+	elseif spec.kind == "PizzaToss" then
+		p.Shape = Enum.PartType.Cylinder
+		p.Size = Vector3.new(0.2, 2, 2)
 		p.Color = Color3.fromRGB(255, 170, 60)
+		p.Material = Enum.Material.SmoothPlastic
 	end
 
 	local start = owner.root.Position + dir * 3
@@ -107,6 +154,8 @@ function Effects.launchProjectile(owner: Actor, spec: ProjectileSpec)
 			p:Destroy()
 			if hit then
 				spec.onHit(Actors.view(hit))
+				local announcement = if spec.kind == "Fireball" or spec.kind == "Whistle" then "STUNNED!" elseif spec.kind == "PizzaToss" then "SLOWED!" else nil
+				Remotes.event(Net.PlayPowerFx):FireAllClients(hit.model, spec.kind, { action = "hit", announcement = announcement })
 			end
 		end
 	end)
@@ -136,9 +185,15 @@ function Effects.placeTrap(owner: Actor, spec: TrapSpec)
 	p.CanCollide = false
 	p.CanQuery = false
 	p.CanTouch = false
-	p.Color = Color3.fromRGB(230, 220, 120)
-	p.Material = Enum.Material.Glass
-	p.Transparency = 0.3
+	if spec.kind == "GreaseSpill" then
+		p.Color = Color3.fromRGB(180, 160, 50)
+		p.Material = Enum.Material.Glass
+		p.Transparency = 0.4
+	else
+		p.Color = Color3.fromRGB(230, 220, 120)
+		p.Material = Enum.Material.Glass
+		p.Transparency = 0.3
+	end
 	p.Parent = folder
 
 	trapsByOwner[owner.id] = (trapsByOwner[owner.id] or 0) + 1
@@ -152,6 +207,8 @@ function Effects.placeTrap(owner: Actor, spec: TrapSpec)
 				now[a.id] = true
 				if not inside[a.id] then
 					spec.onEnter(Actors.view(a))
+					local announcement = if spec.kind == "GreaseSpill" then "SLOWED!" else nil
+					Remotes.event(Net.PlayPowerFx):FireAllClients(a.model, spec.kind, { action = "trap_enter", announcement = announcement })
 				end
 			end
 		end

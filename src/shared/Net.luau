@@ -10,4 +10,5 @@ return {
 
 	-- server -> client
 	Announce = "Announce", -- (text: string)
+	PlayPowerFx = "PlayPowerFx", -- (model: Model, powerId: string, data: any)
 }

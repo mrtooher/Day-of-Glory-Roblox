@@ -13,7 +13,7 @@ local matchState: Folder
 function Remotes.init(_services)
 	folder = Instance.new("Folder")
 	folder.Name = Net.RemotesFolder
-	for _, name in { Net.RequestPower, Net.RequestCharacter, Net.Announce } do
+	for _, name in { Net.RequestPower, Net.RequestCharacter, Net.Announce, Net.PlayPowerFx } do
 		local ev = Instance.new("RemoteEvent")
 		ev.Name = name
 		ev.Parent = folder
