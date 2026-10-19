@@ -58,9 +58,9 @@ local function buildSwitchZone(teamId: string, spawnPart: BasePart)
 
 	local sign = Instance.new("BillboardGui")
 	sign.Name = "SwitchSign"
-	sign.Size = UDim2.fromOffset(220, 40)
-	sign.StudsOffset = Vector3.new(0, 9, 0)
-	sign.MaxDistance = 80
+	sign.Size = UDim2.fromOffset(130, 22)
+	sign.StudsOffset = Vector3.new(0, 11, 0)
+	sign.MaxDistance = 45
 	sign.Adornee = spawnPart
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)
@@ -69,7 +69,7 @@ local function buildSwitchZone(teamId: string, spawnPart: BasePart)
 	label.TextScaled = true
 	label.TextColor3 = Color3.new(1, 1, 1)
 	label.TextStrokeTransparency = 0.3
-	label.Text = "SWITCH CHARACTER HERE"
+	label.Text = "SWITCH CHARACTER"
 	label.Parent = sign
 	sign.Parent = disc
 end

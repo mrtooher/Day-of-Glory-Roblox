@@ -42,6 +42,12 @@ Stage 6: double-check panel.
 | 10 | 4 | same: "main colour from Looks.luau", "create it the same way" | FAIL | Looks has no single colour field (`shirt = "#3a2a1a"` hex strings); prompts reworded to `Looks[id].shirt` + `Color3.fromHex`, and the exact Remotes list |
 | 11 | 2 | lead re-run after worker: `lune run tools/arena-check/run` | PASS | `arena: 2568 parts, 8 dash pads, 4 jump pads, 61 signs` · `ARENA CHECK: 92 passed, 0 failed` (was 60/12) |
 | 12 | 2,6 | `luau-lsp analyze ... src` + `lune run tests/run` + `rojo build`; old `BurgerJointStep` removed (`grep` → none) | PASS | `lsp exit=0` · `TOTAL: 134 passed, 0 failed` · `Built project to DayOfGlory-test.rbxl` |
+| 13 | 5 | Studio (edit-mode preview via command bar): screenshot Burger Joint roof | PASS | marble stand + red rim, umbrella, ROOFTOP FOOD sign, giant burger beside it, stair landing + lamp + roof-wall gap visible |
+| 14 | 1,2,5 | Studio 2-client run, server log `grep "\[Food\]"` | PASS | `Bot 6 grabbed RED's sushi!` · `Bot 2 grabbed BLUE's burger!` · `Bot 5 grabbed RED's sushi!` · `Bot 1 grabbed BLUE's sushi!` (sushi/burger = rooftop items: bots climbed Sushi Bar, Arcade and the 16-step Sunny Apts stairs) |
+| 15 | 5 | same run: `grep -c FLog::CreatorError` server + 2 clients | PASS | `0` / `0` / `0` |
+| 16 | 5 | same run: HUD | PASS | `RED 2/10  BLUE 1/10` at 8:01; feed line small (`Bot 1 scored for Red! (2/10)`); `+1 NICE DELIVERY!` banner ~half previous size |
+| 17 | 5 | same run: screenshot inside Pizza Palace | FAIL | white counter/floor tiles/Cook outfit still blown out; `SWITCH CHARACTER HERE` billboard overlaps the banner → all map PointLights ×0.45 brightness ×0.8 range; switch sign 220×40 → 130×22, text `SWITCH CHARACTER` |
+| 18 | 5 | after fix: `luau-lsp` + `lune run tests/run` + arena check + build | PASS | `lsp exit=0` · `TOTAL: 134 passed, 0 failed` · `ARENA CHECK: 92 passed, 0 failed` |
 
 ## Double-check
 

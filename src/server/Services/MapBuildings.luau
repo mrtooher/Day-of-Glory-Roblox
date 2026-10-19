@@ -129,11 +129,14 @@ local function wedge(parent: Instance, name: string, size: Vector3, cf: CFrame, 
 	return newPart("WedgePart", parent, name, size, cf, color, mat, collide == true)
 end
 
+-- Studio test 2026-10-19: lamps/oven glow at full strength blew white
+-- surfaces inside the shops out to pure white. All map lights are damped here.
+local LIGHT_SCALE = 0.45
 local function light(p: Instance, color: Color3, range: number, brightness: number)
 	local l = Instance.new("PointLight")
 	l.Color = color
-	l.Range = range
-	l.Brightness = brightness
+	l.Range = range * 0.8
+	l.Brightness = brightness * LIGHT_SCALE
 	l.Shadows = false
 	l.Parent = p
 end
