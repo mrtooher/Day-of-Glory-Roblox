@@ -16,7 +16,7 @@ src/shared/   → ReplicatedStorage.Shared
   Net.luau                remote / state names shared by server and client
   Rules/                  pure game rules, no Roblox API calls (unit tested)
     Scoring, MatchEnd, MatchPhase, Territory, TagResolution,
-    FoodState, TeamPick, Movement, BotBrain
+    FoodState, TeamPick, Movement, BotBrain, AudioRules, CharacterSwitch
   Powers/                 PowerBase (shared cooldown class) + one module per power
 src/server/   → ServerScriptService.Server
   Main.server.luau        boots the services
@@ -25,7 +25,7 @@ src/server/   → ServerScriptService.Server
                           TagService, CharacterService, BotService
 src/client/   → StarterPlayer.StarterPlayerScripts.Client
   Main.client.luau        boots the client modules
-  Hud, PowerButtons, CharacterSelect, Visibility
+  Hud, PowerButtons, CharacterSelect, Visibility, PowerFx, Audio, Pads, GameFeel
 tests/                    Lune test runner + specs for Rules, Powers and Config
 ```
 
@@ -39,18 +39,31 @@ server-side positions.
 |---|---|
 | Kelly | YELL — knock back enemies nearby; an enemy carrier drops their food |
 | Sol | FIREBALL — projectile; stuns the target briefly |
-| Vex | VANISH — invisible + untaggable for 3 s; ends when Vex grabs food |
+| Vex | VANISH — invisible + untaggable for 5 s (10 s cooldown); ends when Vex grabs food |
 | Pim | SLOW-MO — slows enemies nearby; passive super jump (x1.7) |
-| Cop | WHISTLE — freezes the nearest enemy inside the Cop's own territory |
+| Cop | STUN GUN — fires a bolt straight ahead; freezes the first enemy it hits |
 | Dog | SNIFF — sprint, and reveal vanished Vexes and food carriers |
 | Pizza Man | PIZZA TOSS — spinning pizza slows whoever it hits |
 | Cook | GREASE SPILL — trap that slows enemy raiders who cross it |
 
 Max 2 of the same character per team. A human who picks a character a bot is
-using takes it; the bot switches. Characters can be changed between matches.
+using takes it; the bot switches. Characters can be changed anywhere between
+matches; during a match only inside your base's glowing circle
+(`Config.HomeSwitchRadius`) and not while carrying food. Switching keeps your
+current power cooldown.
 
 Controls: power = **Q** (keyboard), **X** (gamepad), or the on-screen button on
-phones/tablets. The **CHARACTER** button (bottom-left) opens the picker.
+phones/tablets. The **CHARACTER** button (bottom-left) opens the picker. The **SOUND** button
+next to it mutes / unmutes music and effects.
+
+## Audio
+
+All sound ids live in `Config.Audio` (an id of 0 is skipped). A 3-song playlist
+(`Config.Audio.playlist`) plays shuffled through the pre-match countdown and
+the match (next song when one ends, never the same song twice in a row), and
+fades out when the match ends. Effect
+slots (score, countdown beeps, one per power) are wired but empty until ids
+are added.
 
 ## Tools
 
@@ -66,7 +79,7 @@ rokit install
 lune run tests/run
 ```
 
-Confirmed working in this repo with Lune 0.10.4: `TOTAL: 92 passed, 0 failed`.
+Confirmed working in this repo with Lune 0.10.4: `TOTAL: 111 passed, 0 failed`.
 The runner exits non-zero on any failure, when no tests ran, or when a
 `*.spec.luau` file exists but is not listed in `tests/run.luau`.
 

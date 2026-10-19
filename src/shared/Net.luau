@@ -11,4 +11,5 @@ return {
 	-- server -> client
 	Announce = "Announce", -- (text: string)
 	PlayPowerFx = "PlayPowerFx", -- (model: Model, powerId: string, data: any)
+	PowerDenied = "PowerDenied", -- (message: string) to the player whose power failed
 }

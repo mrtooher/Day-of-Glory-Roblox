@@ -84,6 +84,8 @@ function CharacterSelect.start()
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = grid
 
+	local pending: string? = nil -- character requested, waiting for the server
+
 	-- The CHARACTER button doubles as a close button while the panel is open.
 	local function setOpen(open: boolean)
 		panel.Visible = open
@@ -121,18 +123,32 @@ function CharacterSelect.start()
 		b.Text = string.format("%s\n%s", names[c.id] or c.id, Config.Powers[c.power].displayName)
 		b.Parent = grid
 		b.Activated:Connect(function()
+			if player:GetAttribute("CharacterId") == c.id then
+				closePanel() -- already this character
+				return
+			end
+			-- Stay open until the server answers: closes on success, shows the
+			-- reason on failure (e.g. not at your base during a match).
+			pending = c.id
+			status.TextColor3 = Color3.new(1, 1, 1)
+			status.Text = "Switching..."
 			request:FireServer(c.id)
-			closePanel() -- FIX: Close panel when a character is picked
 		end)
 	end
 
 	local function refresh()
 		local current = player:GetAttribute("CharacterId")
 		local err = player:GetAttribute("SelectError")
+		if pending and current == pending then
+			pending = nil
+			closePanel()
+		end
 		if type(err) == "string" and err ~= "" then
+			status.TextColor3 = Color3.fromRGB(255, 110, 110)
 			status.Text = err
 		elseif type(current) == "string" then
-			status.Text = "You are " .. (names[current] or current)
+			status.TextColor3 = Color3.new(1, 1, 1)
+			status.Text = "You are " .. (names[current] or current) .. "  (mid-match: switch at your base)"
 		end
 		for _, child in grid:GetChildren() do
 			if child:IsA("TextButton") then
@@ -145,6 +161,10 @@ function CharacterSelect.start()
 	
 	player:GetAttributeChangedSignal("CharacterId"):Connect(refresh)
 	player:GetAttributeChangedSignal("SelectError"):Connect(refresh)
+	player:GetAttributeChangedSignal("SelectErrorCount"):Connect(function()
+		pending = nil
+		refresh()
+	end)
 	refresh()
 
 	gui.Parent = player:WaitForChild("PlayerGui")

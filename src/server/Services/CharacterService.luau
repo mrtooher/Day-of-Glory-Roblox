@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Config)
 local Net = require(ReplicatedStorage.Shared.Net)
 local TeamPick = require(ReplicatedStorage.Shared.Rules.TeamPick)
+local CharacterSwitch = require(ReplicatedStorage.Shared.Rules.CharacterSwitch)
 local Remotes = require(script.Parent.Remotes)
 local MapService = require(script.Parent.MapService)
 local Actors = require(script.Parent.Actors)
@@ -139,6 +140,14 @@ local function onCharacter(player: Player, model: Model)
 	end)
 end
 
+-- Error text for the picker; the counter makes a repeat of the same text
+-- still reach the client (attributes only replicate on change).
+local function selectError(player: Player, text: string)
+	player:SetAttribute("SelectError", text)
+	local count = player:GetAttribute("SelectErrorCount")
+	player:SetAttribute("SelectErrorCount", (if type(count) == "number" then count else 0) + 1)
+end
+
 local function onRequest(player: Player, characterId: unknown)
 	if type(characterId) ~= "string" then
 		return
@@ -147,8 +156,16 @@ local function onRequest(player: Player, characterId: unknown)
 	if not actor then
 		return
 	end
-	if MatchService.isPlaying() then
-		player:SetAttribute("SelectError", "You can change character between matches.")
+	local spawnPos = MapService.kitchen(actor.team).spawn
+	local here = Actors.position(actor)
+	local allowed, why = CharacterSwitch.check({
+		playing = MatchService.isPlaying(),
+		carrying = actor.carrying,
+		distanceFromSpawn = Vector3.new(here.X - spawnPos.X, 0, here.Z - spawnPos.Z).Magnitude,
+		homeRadius = Config.HomeSwitchRadius,
+	})
+	if not allowed then
+		selectError(player, CharacterSwitch.messages[why :: string] or "Can't switch right now.")
 		return
 	end
 
@@ -179,7 +196,7 @@ local function onRequest(player: Player, characterId: unknown)
 		player:SetAttribute("SelectError", "")
 		CharacterService.setCharacter(actor, characterId)
 	else
-		player:SetAttribute("SelectError", if reason == "character full" then "Two of your team already play that character." else "Unknown character.")
+		selectError(player, if reason == "character full" then "Two of your team already play that character." else "Unknown character.")
 	end
 end
 

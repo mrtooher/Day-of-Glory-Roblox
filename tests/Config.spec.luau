@@ -24,13 +24,20 @@ return function(t)
 		t.eq(Config.MaxSameCharacterPerTeam, 2)
 		t.eq(#Config.Teams, 2)
 		t.eq(#Config.FoodTypes, 4)
-		t.eq(Config.Powers.Yell.radius, 4.5)
-		t.eq(Config.Powers.Vanish.durationSeconds, 3)
+		t.eq(Config.Powers.Yell.radius, 12) -- retuned 2026-10-19: 4.5 studs was touch range
+		t.eq(Config.Powers.Vanish.durationSeconds, 5)
+		t.truthy(Config.Powers.Vanish.cooldown > Config.Powers.Vanish.durationSeconds, "vanish cooldown longer than vanish")
 		t.eq(Config.Powers.SlowMo.durationSeconds, 3)
 		t.eq(Config.Powers.SlowMo.passiveJumpMultiplier, 1.7)
 	end)
 
 	t.test("team slots fit within character limits", function()
 		t.truthy(#Config.Characters * Config.MaxSameCharacterPerTeam >= Config.MaxPlayersPerTeam)
+	end)
+
+	t.test("jump pads clear the tallest roof beside a pad (Apartments parapet 25.2)", function()
+		local g = 196.2 -- Workspace.Gravity default
+		local apex = Config.Pads.jumpVelocity ^ 2 / (2 * g)
+		t.truthy(apex >= 25.2 + 1, "apex " .. apex)
 	end)
 end

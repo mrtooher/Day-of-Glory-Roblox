@@ -1,16 +1,17 @@
 --!strict
--- Cop — WHISTLE: freezes the nearest enemy that is inside the Cop's own territory.
+-- Cop — STUN GUN: fires a bolt straight ahead; the first enemy it hits is
+-- frozen. Works anywhere on the map.
 return {
 	id = "Whistle",
 	activate = function(ctx: any, config: any): (boolean, string?)
-		local myTeam = ctx.user.team
-		local target = ctx.nearestEnemy(config.range, function(enemy)
-			return ctx.territoryOf(enemy) == myTeam
-		end)
-		if not target then
-			return false, "no target"
-		end
-		ctx.applyStatus(target, "freeze", config.freezeSeconds, nil)
+		ctx.launchProjectile({
+			kind = "Whistle",
+			speed = config.speed,
+			range = config.range,
+			onHit = function(target)
+				ctx.applyStatus(target, "freeze", config.freezeSeconds, nil)
+			end,
+		})
 		return true, nil
 	end,
 }

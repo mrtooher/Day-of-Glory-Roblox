@@ -85,9 +85,34 @@ local function highlight(model: Model, show: boolean, color: Color3)
 	end
 end
 
+-- "INVISIBLE 4" banner for your own Vex while vanished.
+local function makeSelfBanner(player: Player): TextLabel
+	local gui = Instance.new("ScreenGui")
+	gui.Name = "VanishBanner"
+	gui.ResetOnSpawn = false
+	local label = Instance.new("TextLabel")
+	label.AnchorPoint = Vector2.new(0.5, 0)
+	label.Position = UDim2.new(0.5, 0, 0, 60)
+	label.Size = UDim2.fromOffset(320, 44)
+	label.BackgroundColor3 = Color3.fromRGB(90, 40, 140)
+	label.BackgroundTransparency = 0.2
+	label.Font = Enum.Font.GothamBlack
+	label.TextScaled = true
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.Visible = false
+	label.Parent = gui
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 10)
+	corner.Parent = label
+	gui.Parent = player:WaitForChild("PlayerGui")
+	return label
+end
+
 function Visibility.start()
 	local player = Players.LocalPlayer
 	local state = ReplicatedStorage:WaitForChild(Net.MatchStateFolder)
+	local banner = makeSelfBanner(player)
+	local selfFaded = false
 
 	while true do
 		local myTeam = player.Team and player.Team.Name
@@ -100,8 +125,20 @@ function Visibility.start()
 			local vanished = model:GetAttribute("Vanished") == true
 			local carrying = model:GetAttribute("Carrying") == true
 
-			-- Leave our own character alone: the camera sets its transparency.
-			if model ~= player.Character then
+			if model == player.Character then
+				-- Your own Vex: see-through ghost + countdown so you know it worked.
+				-- Only touch transparency on change; the camera also sets it.
+				if vanished ~= selfFaded then
+					setTransparency(model, if vanished then 0.7 else 0)
+					selfFaded = vanished
+				end
+				local untilT = model:GetAttribute("VanishedUntil") or 0
+				local left = untilT - Workspace:GetServerTimeNow()
+				banner.Visible = vanished and left > 0
+				if banner.Visible then
+					banner.Text = string.format("INVISIBLE  %d", math.ceil(left))
+				end
+			else
 				if vanished and enemy and not revealed then
 					setTransparency(model, 1)
 				elseif vanished then

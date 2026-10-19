@@ -83,6 +83,7 @@ function StatusService.refresh(actor: Actor)
 
 	local vanished = Actors.isVanished(actor, now)
 	actor.model:SetAttribute("Vanished", vanished)
+	actor.model:SetAttribute("VanishedUntil", if vanished then actor.vanishedUntil else 0)
 	actor.model:SetAttribute("Disabled", not r.canAct)
 	humanoid.DisplayDistanceType = if vanished
 		then Enum.HumanoidDisplayDistanceType.None

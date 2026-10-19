@@ -79,4 +79,50 @@ return function(t)
 			BotBrain.decide(input({ role = "goalie" }))
 		end)
 	end)
+
+	t.test("laneWaypoint: far from target -> lane point short of it", function()
+		-- Red raider at its base heading to Blue pantry (180, 0), using north alley z 70.
+		local x, z = BotBrain.laneWaypoint(-180, 177, 0, 70, 45)
+		t.eq(x, 132)
+		t.eq(z, 70)
+		-- Same going the other way (Blue raider to Red pantry).
+		x, z = BotBrain.laneWaypoint(180, -177, 0, -70, 45)
+		t.eq(x, -132)
+		t.eq(z, -70)
+	end)
+
+	t.test("laneWaypoint: close in X -> straight to the target", function()
+		local x, z = BotBrain.laneWaypoint(135, 177, 0, 70, 45)
+		t.eq(x, 177)
+		t.eq(z, 0)
+		x, z = BotBrain.laneWaypoint(177, 177, 0, 70, 45)
+		t.eq(x, 177)
+		t.eq(z, 0)
+	end)
+
+	t.test("laneWaypoint: lane point is reached before switching (no ping-pong)", function()
+		-- Standing on the lane point itself must route to the target.
+		local lx, lz = BotBrain.laneWaypoint(-180, 177, 0, 0, 45)
+		local x, z = BotBrain.laneWaypoint(lx, 177, 0, 0, 45)
+		t.eq(x, 177)
+		t.eq(z, 0)
+	end)
+
+	t.test("stuck: moving resets the window", function()
+		local isStuck, restart = BotBrain.stuck(3, 0, 1, 2, 2.5)
+		t.falsy(isStuck)
+		t.truthy(restart)
+	end)
+
+	t.test("stuck: barely moving, not long enough yet", function()
+		local isStuck, restart = BotBrain.stuck(0.5, 0, 2, 2, 2.5)
+		t.falsy(isStuck)
+		t.falsy(restart)
+	end)
+
+	t.test("stuck: barely moving for the full window", function()
+		local isStuck, restart = BotBrain.stuck(0.5, 0, 2.5, 2, 2.5)
+		t.truthy(isStuck)
+		t.truthy(restart)
+	end)
 end

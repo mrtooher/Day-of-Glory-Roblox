@@ -11,6 +11,13 @@ type Actor = Actors.Actor
 
 local PowerService = {}
 
+-- Shown to a player whose power didn't fire (cooldown is shown on the button).
+local DENIED_MESSAGES: { [string]: string } = {
+	carrying = "Can't vanish while carrying food!",
+	["too many traps"] = "Too many grease spills out!",
+	disabled = "You're stunned!",
+}
+
 local MatchService: any, FoodService: any, StatusService: any, Effects: any
 
 local powerByCharacter: { [string]: string } = {}
@@ -31,9 +38,15 @@ end
 
 function PowerService.assign(actor: Actor)
 	local id = PowerService.powerIdFor(actor.characterId)
-	actor.power = PowerBase.new(Powers.definitions[id], Config.Powers[id])
+	local previous = actor.power
+	local power = PowerBase.new(Powers.definitions[id], Config.Powers[id])
+	if previous then
+		-- Switching character mid-match keeps the current cooldown (no free reset).
+		power.readyAt = previous.readyAt
+	end
+	actor.power = power
 	actor.model:SetAttribute("PowerId", id)
-	actor.model:SetAttribute("PowerReadyAt", 0)
+	actor.model:SetAttribute("PowerReadyAt", math.max(0, power.readyAt))
 end
 
 local function makeCtx(actor: Actor): PowerBase.Ctx
@@ -89,11 +102,6 @@ local function makeCtx(actor: Actor): PowerBase.Ctx
 			local a = resolve(view)
 			if a then
 				StatusService.apply(a, kind, seconds, multiplier)
-				if kind == "freeze" then
-					-- Cop's STUN GUN: taser bolt from the Cop to the target.
-					Effects.zap(Actors.position(actor), Actors.position(a), Color3.fromRGB(255, 240, 60))
-					Remotes.event(Net.PlayPowerFx):FireAllClients(a.model, "Whistle", { action = "hit", announcement = "STUNNED!" })
-				end
 			end
 		end,
 		setVanished = function(view, seconds)
@@ -128,8 +136,14 @@ function PowerService.tryUse(actor: Actor): (boolean, string?)
 	local ok, reason = actor.power:tryActivate(makeCtx(actor), now)
 	if ok then
 		actor.model:SetAttribute("PowerReadyAt", now + actor.power:remaining(now))
-		local announcement = if actor.power.definition.id == "Yell" then "KNOCKED BACK!" else nil
-		Remotes.event(Net.PlayPowerFx):FireAllClients(actor.model, actor.power.definition.id, { action = "activate", announcement = announcement })
+		local id = actor.power.definition.id
+		local announcement = if id == "Yell"
+			then "KNOCKED BACK!"
+			elseif id == "Vanish" then string.format("INVISIBLE FOR %d SECONDS!", Config.Powers.Vanish.durationSeconds)
+			else nil
+		Remotes.event(Net.PlayPowerFx):FireAllClients(actor.model, id, { action = "activate", announcement = announcement })
+	elseif actor.player and reason and DENIED_MESSAGES[reason] then
+		Remotes.event(Net.PowerDenied):FireClient(actor.player, DENIED_MESSAGES[reason])
 	end
 	return ok, reason
 end
