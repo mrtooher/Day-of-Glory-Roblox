@@ -42,24 +42,69 @@ local function fadeTo(volume: number, onDone: (() -> ())?)
 	tween:Play()
 end
 
-local function playTrack(id: number)
+local nowPlaying: TextLabel? = nil
+local trackToken = 0 -- bumps on every new track; stale timers check it
+local failedInARow = 0
+
+local function showNowPlaying(name: string)
+	local label = nowPlaying
+	if not label then
+		return
+	end
+	label.Text = "♪  NOW PLAYING: " .. name
+	label.TextTransparency = 0
+	label.BackgroundTransparency = 0.35
+	local mine = trackToken
+	task.delay(5, function()
+		if trackToken == mine then
+			TweenService:Create(label, TweenInfo.new(1), { TextTransparency = 1, BackgroundTransparency = 1 }):Play()
+		end
+	end)
+end
+
+local playNextInPlaylist: () -> ()
+
+local function playTrack(id: number, name: string)
 	local uri = AudioRules.assetUri(id)
 	if not uri then
 		return
 	end
+	trackToken += 1
+	local mine = trackToken
 	music:Stop()
 	music.SoundId = uri
 	music.Volume = 0
 	music.TimePosition = 0
 	music:Play()
 	fadeTo(A.musicVolume)
+	print(string.format("[Audio] Now playing %s (%.0f)", name, id))
+	showNowPlaying(name)
+	-- A song that never loads (still in moderation, no permission) would
+	-- otherwise stall the playlist forever: skip it.
+	task.delay(A.loadTimeoutSeconds, function()
+		if trackToken ~= mine or music.IsLoaded then
+			if trackToken == mine then
+				failedInARow = 0
+			end
+			return
+		end
+		warn(string.format("[Audio] Could not load %s (%.0f) - skipping", name, id))
+		failedInARow += 1
+		if musicMode == "playlist" and failedInARow < #A.playlist then
+			playNextInPlaylist()
+		end
+	end)
 end
 
-local function playNextInPlaylist()
+playNextInPlaylist = function()
 	local count = #A.playlist
+	if count == 0 then
+		return
+	end
 	local roll = math.random(1, math.max(1, count - 1))
 	trackIndex = AudioRules.nextIndex(count, trackIndex, roll)
-	playTrack(A.playlist[trackIndex :: number])
+	local track = A.playlist[trackIndex :: number]
+	playTrack(track.id, track.name)
 end
 
 -- Switch music mode. Same mode = keep playing (no restart).
@@ -73,7 +118,7 @@ local function setMusicMode(mode: string)
 		playNextInPlaylist()
 	elseif mode == "win" then
 		music.Looped = false
-		playTrack(A.winMusic)
+		playTrack(A.winMusic, "Victory")
 	else
 		fadeTo(0, function()
 			if musicMode == "none" then
@@ -163,6 +208,32 @@ function Audio.start()
 	end)
 
 	makeMuteButton()
+
+	-- "NOW PLAYING" label, top-left under the scoreboard area.
+	local npGui = Instance.new("ScreenGui")
+	npGui.Name = "NowPlaying"
+	npGui.ResetOnSpawn = false
+	local np = Instance.new("TextLabel")
+	np.AnchorPoint = Vector2.new(0, 0)
+	np.Position = UDim2.new(0, 12, 0, 60)
+	np.Size = UDim2.fromOffset(330, 30)
+	np.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+	np.BackgroundTransparency = 1
+	np.TextTransparency = 1
+	np.Font = Enum.Font.GothamBold
+	np.TextScaled = true
+	np.TextColor3 = Color3.fromRGB(255, 220, 120)
+	np.TextXAlignment = Enum.TextXAlignment.Left
+	np.Text = ""
+	np.Parent = npGui
+	local npCorner = Instance.new("UICorner")
+	npCorner.CornerRadius = UDim.new(0, 8)
+	npCorner.Parent = np
+	local npPad = Instance.new("UIPadding")
+	npPad.PaddingLeft = UDim.new(0, 8)
+	npPad.Parent = np
+	npGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+	nowPlaying = np
 
 	local state = ReplicatedStorage:WaitForChild(Net.MatchStateFolder)
 	local remotes = ReplicatedStorage:WaitForChild(Net.RemotesFolder)

@@ -4,7 +4,7 @@
 
 local modules = script.Parent
 
-for _, name in { "Hud", "PowerButtons", "CharacterSelect", "Visibility", "PowerFx", "Audio" } do
+for _, name in { "Hud", "PowerButtons", "CharacterSelect", "Visibility", "PowerFx", "Audio", "Pads", "GameFeel" } do
 	local m = require(modules:WaitForChild(name) :: ModuleScript) :: any
 	task.spawn(m.start)
 end

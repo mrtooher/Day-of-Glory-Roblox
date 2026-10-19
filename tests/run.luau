@@ -20,6 +20,8 @@ local specs: { [string]: any } = {
 	["Rules/BotBrain.spec"] = require("./Rules/BotBrain.spec"),
 	["Rules/AudioRules.spec"] = require("./Rules/AudioRules.spec"),
 	["Rules/CharacterSwitch.spec"] = require("./Rules/CharacterSwitch.spec"),
+	["Rules/Reach.spec"] = require("./Rules/Reach.spec"),
+	["Rules/PadCooldown.spec"] = require("./Rules/PadCooldown.spec"),
 	["Config.spec"] = require("./Config.spec"),
 	["Looks.spec"] = require("./Looks.spec"),
 }

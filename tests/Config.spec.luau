@@ -24,7 +24,7 @@ return function(t)
 		t.eq(Config.MaxSameCharacterPerTeam, 2)
 		t.eq(#Config.Teams, 2)
 		t.eq(#Config.FoodTypes, 4)
-		t.eq(Config.Powers.Yell.radius, 4.5)
+		t.eq(Config.Powers.Yell.radius, 12) -- retuned 2026-10-19: 4.5 studs was touch range
 		t.eq(Config.Powers.Vanish.durationSeconds, 5)
 		t.truthy(Config.Powers.Vanish.cooldown > Config.Powers.Vanish.durationSeconds, "vanish cooldown longer than vanish")
 		t.eq(Config.Powers.SlowMo.durationSeconds, 3)

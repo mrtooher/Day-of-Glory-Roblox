@@ -27,7 +27,7 @@ Config.DroppedFoodSeconds = 10
 Config.CarrierSpeedMultiplier = 0.75
 
 -- Movement ------------------------------------------------------------------
-Config.BaseWalkSpeed = 16
+Config.BaseWalkSpeed = 20 -- 400-stud field: 16 felt like a long walk
 Config.BaseJumpPower = 50
 
 -- Tagging -------------------------------------------------------------------
@@ -62,15 +62,15 @@ Config.Powers = {
 	Yell = {
 		displayName = "YELL",
 		cooldown = 5,
-		radius = 4.5,
-		knockback = 60, -- horizontal impulse speed (studs/s)
+		radius = 12, -- Unity 4.5 was Unity units; 4.5 studs = touching only
+		knockback = 85, -- horizontal impulse speed (studs/s)
 	},
 	Fireball = {
 		displayName = "FIREBALL",
 		cooldown = 5,
-		speed = 60,
-		range = 80,
-		stunSeconds = 1.5,
+		speed = 75,
+		range = 90,
+		stunSeconds = 2,
 	},
 	Vanish = {
 		displayName = "VANISH",
@@ -80,7 +80,7 @@ Config.Powers = {
 	SlowMo = {
 		displayName = "SLOW-MO",
 		cooldown = 5,
-		radius = 12,
+		radius = 16,
 		durationSeconds = 3,
 		speedMultiplier = 0.5,
 		passiveJumpMultiplier = 1.7,
@@ -95,22 +95,22 @@ Config.Powers = {
 	Sniff = {
 		displayName = "SNIFF",
 		cooldown = 5,
-		durationSeconds = 3,
-		speedMultiplier = 1.5,
+		durationSeconds = 4,
+		speedMultiplier = 1.7,
 	},
 	PizzaToss = {
 		displayName = "PIZZA KNIFE",
 		cooldown = 5,
-		speed = 45,
-		range = 60,
+		speed = 60,
+		range = 70,
 		slowSeconds = 2.5,
 		speedMultiplier = 0.5,
 	},
 	GreaseSpill = {
 		displayName = "GREASE",
 		cooldown = 5,
-		lifetimeSeconds = 12,
-		radius = 4,
+		lifetimeSeconds = 15,
+		radius = 6,
 		slowSeconds = 2,
 		speedMultiplier = 0.4,
 		maxActivePerCook = 2,
@@ -139,7 +139,19 @@ Config.Map = {
 -- and not while carrying food. Between matches you can switch anywhere.
 Config.HomeSwitchRadius = 20
 
-Config.FoodPickupRadius = 4 -- studs from a food piece to grab/touch it
+Config.FoodPickupRadius = 4 -- studs from a DROPPED food piece to touch it
+-- Grabbing from a pantry counter: horizontal distance from your body to a
+-- food slot, plus a height window (food sits on a counter top).
+Config.FoodGrab = { radius = 6, maxHeight = 6 }
+
+-- Map pads (parts named DashPad1.. / JumpPad1.. in the Arena).
+Config.Pads = {
+	radius = 4, -- horizontal studs from the pad centre
+	dashMultiplier = 1.6,
+	dashSeconds = 2,
+	jumpVelocity = 95, -- studs/s straight up (players only)
+	cooldownSeconds = 1.5, -- per actor per pad
+}
 Config.DropoffRadius = 6
 Config.BurgerPickupRadius = 4
 Config.ProjectileHitRadius = 3
@@ -161,11 +173,13 @@ Config.Audio = {
 	fadeSeconds = 1,
 	musicPhases = { "Intermission", "Playing" },
 	-- Playlist plays in musicPhases, shuffled, next song when one ends.
+	-- Names from the Roblox asset details (creator Nuggetdog447).
 	playlist = {
-		140350912499061, -- "Feast for your life" by Jim
-		107858682693210,
-		89048811438062,
+		{ id = 140350912499061, name = "Feast for your life" },
+		{ id = 107858682693210, name = "Kishi In My Kuna" },
+		{ id = 89048811438062, name = "Neon Horizon" },
 	},
+	loadTimeoutSeconds = 10, -- skip a song that hasn't loaded by then
 	winMusic = 0, -- PostMatch; 0 = silence after the match
 	sfx = {
 		score = 0,

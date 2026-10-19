@@ -3,7 +3,7 @@ local Config = require("../../src/shared/Config")
 
 local audio = {
 	musicPhases = { "Intermission", "Playing" },
-	playlist = { 111, 222, 333 },
+	playlist = { { id = 111, name = "a" }, { id = 222, name = "b" }, { id = 333, name = "c" } },
 	winMusic = 0,
 	sfx = {},
 	countdownBeepSeconds = 3,
@@ -70,9 +70,11 @@ return function(t)
 
 	t.test("real config: 3-song playlist, every power has an sfx slot", function()
 		t.eq(#Config.Audio.playlist, 3)
-		t.eq(Config.Audio.playlist[1], 140350912499061)
-		t.eq(Config.Audio.playlist[2], 107858682693210)
-		t.eq(Config.Audio.playlist[3], 89048811438062)
+		t.eq(Config.Audio.playlist[1].id, 140350912499061)
+		t.eq(Config.Audio.playlist[2].id, 107858682693210)
+		t.eq(Config.Audio.playlist[3].id, 89048811438062)
+		t.eq(Config.Audio.playlist[2].name, "Kishi In My Kuna")
+		t.truthy(Config.Audio.loadTimeoutSeconds > 0, "load timeout set")
 		t.eq(AudioRules.musicMode("Playing", Config.Audio), "playlist")
 		for id in Config.Powers do
 			t.truthy(Config.Audio.sfx[id] ~= nil, "sfx slot for " .. id)

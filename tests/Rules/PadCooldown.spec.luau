@@ -1,0 +1,27 @@
+local PadCooldown = require("../../src/shared/Rules/PadCooldown")
+
+return function(t)
+	t.test("first touch fires, standing on it does not re-fire", function()
+		local s = PadCooldown.new()
+		t.truthy(PadCooldown.tryUse(s, "a", "DashPad1", 10, 1.5))
+		t.falsy(PadCooldown.tryUse(s, "a", "DashPad1", 10.1, 1.5))
+		t.falsy(PadCooldown.tryUse(s, "a", "DashPad1", 11.4, 1.5))
+		t.truthy(PadCooldown.tryUse(s, "a", "DashPad1", 11.5, 1.5))
+	end)
+
+	t.test("cooldown is per actor and per pad", function()
+		local s = PadCooldown.new()
+		t.truthy(PadCooldown.tryUse(s, "a", "DashPad1", 0, 1.5))
+		t.truthy(PadCooldown.tryUse(s, "b", "DashPad1", 0, 1.5))
+		t.truthy(PadCooldown.tryUse(s, "a", "DashPad2", 0, 1.5))
+	end)
+
+	t.test("forget clears only that actor", function()
+		local s = PadCooldown.new()
+		PadCooldown.tryUse(s, "a", "DashPad1", 0, 5)
+		PadCooldown.tryUse(s, "ab", "DashPad1", 0, 5)
+		PadCooldown.forget(s, "a")
+		t.truthy(PadCooldown.tryUse(s, "a", "DashPad1", 1, 5))
+		t.falsy(PadCooldown.tryUse(s, "ab", "DashPad1", 1, 5))
+	end)
+end

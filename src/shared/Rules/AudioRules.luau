@@ -5,7 +5,7 @@ local AudioRules = {}
 
 export type AudioConfig = {
 	musicPhases: { string },
-	playlist: { number },
+	playlist: { { id: number, name: string } },
 	winMusic: number,
 	sfx: { [string]: number },
 	countdownBeepSeconds: number,

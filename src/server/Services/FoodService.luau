@@ -8,6 +8,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local FoodState = require(ReplicatedStorage.Shared.Rules.FoodState)
+local Reach = require(ReplicatedStorage.Shared.Rules.Reach)
+local Remotes = require(script.Parent.Remotes)
 local MapService = require(script.Parent.MapService)
 local Actors = require(script.Parent.Actors)
 type Actor = Actors.Actor
@@ -15,6 +17,7 @@ type Actor = Actors.Actor
 type Item = {
 	food: FoodState.Food,
 	part: BasePart,
+	rot: CFrame, -- the food root's resting orientation
 	slot: Vector3,
 	weld: WeldConstraint?,
 }
@@ -31,12 +34,93 @@ local settings = {
 	restockSeconds = Config.PantryRestockSeconds,
 }
 
-local looks: { [string]: { shape: Enum.PartType, size: Vector3, color: Color3 } } = {
-	Pizza = { shape = Enum.PartType.Cylinder, size = Vector3.new(0.4, 2.2, 2.2), color = Color3.fromRGB(255, 170, 60) },
-	Burger = { shape = Enum.PartType.Ball, size = Vector3.new(1.8, 1.8, 1.8), color = Color3.fromRGB(150, 90, 40) },
-	Taco = { shape = Enum.PartType.Block, size = Vector3.new(2, 1, 1), color = Color3.fromRGB(240, 210, 80) },
-	Sushi = { shape = Enum.PartType.Block, size = Vector3.new(1.2, 1.2, 1.2), color = Color3.fromRGB(245, 245, 245) },
+-- Food models: a root Part (what gets moved/welded) plus welded detail parts
+-- so each piece reads as pizza / burger / taco / sushi at a glance.
+type Piece = { size: Vector3, offset: CFrame, color: Color3, shape: Enum.PartType?, material: Enum.Material? }
+
+local CYL = CFrame.Angles(0, 0, math.rad(90)) -- cylinder axis X -> Y (flat disc)
+
+local looks: { [string]: { root: Piece, details: { Piece } } } = {
+	Pizza = {
+		root = { size = Vector3.new(0.4, 2.6, 2.6), offset = CYL, color = Color3.fromRGB(214, 150, 70), shape = Enum.PartType.Cylinder },
+		details = {
+			{ size = Vector3.new(0.15, 2.2, 2.2), offset = CFrame.new(0, 0.22, 0) * CYL, color = Color3.fromRGB(255, 205, 70), shape = Enum.PartType.Cylinder },
+			{ size = Vector3.new(0.12, 0.6, 0.6), offset = CFrame.new(0.5, 0.32, 0.3) * CYL, color = Color3.fromRGB(190, 40, 35), shape = Enum.PartType.Cylinder },
+			{ size = Vector3.new(0.12, 0.6, 0.6), offset = CFrame.new(-0.45, 0.32, 0.4) * CYL, color = Color3.fromRGB(190, 40, 35), shape = Enum.PartType.Cylinder },
+			{ size = Vector3.new(0.12, 0.6, 0.6), offset = CFrame.new(0.05, 0.32, -0.55) * CYL, color = Color3.fromRGB(190, 40, 35), shape = Enum.PartType.Cylinder },
+		},
+	},
+	Burger = {
+		root = { size = Vector3.new(0.6, 2.2, 2.2), offset = CYL, color = Color3.fromRGB(205, 140, 60), shape = Enum.PartType.Cylinder },
+		details = {
+			{ size = Vector3.new(0.45, 2.3, 2.3), offset = CFrame.new(0, 0.5, 0) * CYL, color = Color3.fromRGB(110, 60, 30), shape = Enum.PartType.Cylinder },
+			{ size = Vector3.new(0.1, 2.5, 2.5), offset = CFrame.new(0, 0.78, 0) * CYL, color = Color3.fromRGB(255, 200, 40), shape = Enum.PartType.Cylinder },
+			{ size = Vector3.new(0.1, 2.6, 2.6), offset = CFrame.new(0, 0.88, 0) * CYL, color = Color3.fromRGB(90, 190, 70), shape = Enum.PartType.Cylinder },
+			{ size = Vector3.new(1.2, 2.3, 2.3), offset = CFrame.new(0, 1.3, 0), color = Color3.fromRGB(220, 150, 65), shape = Enum.PartType.Ball },
+		},
+	},
+	Taco = {
+		root = { size = Vector3.new(2.4, 0.3, 1.0), offset = CFrame.new(), color = Color3.fromRGB(240, 200, 80) },
+		details = {
+			{ size = Vector3.new(2.4, 1.3, 0.25), offset = CFrame.new(0, 0.6, 0.45) * CFrame.Angles(math.rad(-20), 0, 0), color = Color3.fromRGB(240, 200, 80) },
+			{ size = Vector3.new(2.4, 1.3, 0.25), offset = CFrame.new(0, 0.6, -0.45) * CFrame.Angles(math.rad(20), 0, 0), color = Color3.fromRGB(240, 200, 80) },
+			{ size = Vector3.new(2.2, 0.4, 0.7), offset = CFrame.new(0, 0.55, 0), color = Color3.fromRGB(130, 70, 40) },
+			{ size = Vector3.new(2.2, 0.25, 0.8), offset = CFrame.new(0, 0.85, 0), color = Color3.fromRGB(100, 200, 80) },
+			{ size = Vector3.new(0.35, 0.3, 0.35), offset = CFrame.new(0.6, 1.05, 0), color = Color3.fromRGB(220, 50, 40) },
+			{ size = Vector3.new(0.35, 0.3, 0.35), offset = CFrame.new(-0.5, 1.05, 0.1), color = Color3.fromRGB(220, 50, 40) },
+		},
+	},
+	Sushi = {
+		root = { size = Vector3.new(1.8, 0.8, 1.0), offset = CFrame.new(), color = Color3.fromRGB(250, 250, 245) },
+		details = {
+			{ size = Vector3.new(2.0, 0.3, 1.1), offset = CFrame.new(0, 0.5, 0), color = Color3.fromRGB(255, 140, 90) },
+			{ size = Vector3.new(0.35, 1.0, 1.15), offset = CFrame.new(0, 0.25, 0), color = Color3.fromRGB(30, 50, 35) },
+		},
+	},
 }
+
+local function makePiece(spec: Piece, name: string): Part
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Size = spec.size
+	p.Color = spec.color
+	p.Shape = spec.shape or Enum.PartType.Block
+	p.Material = spec.material or Enum.Material.SmoothPlastic
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.Massless = true
+	return p
+end
+
+-- Detail parts hang off the root with explicit Weld offsets (C0), so they
+-- follow it wherever it is moved, whether or not it is in Workspace yet.
+-- Offsets in `looks` are relative to the food's upright frame; the root's own
+-- rotation (look.root.offset, e.g. a flat disc) is applied on every move.
+local function buildFood(foodType: string): Part
+	local look = looks[foodType]
+	local root = makePiece(look.root, foodType)
+	root.Anchored = true
+	local rootInv = look.root.offset:Inverse()
+	for i, d in look.details do
+		local part = makePiece(d, foodType .. "Bit" .. i)
+		part.Anchored = false
+		local weld = Instance.new("Weld")
+		weld.Part0 = root
+		weld.Part1 = part
+		weld.C0 = rootInv * d.offset
+		weld.Parent = part
+		part.Parent = root
+	end
+	local glow = Instance.new("PointLight")
+	glow.Color = Color3.fromRGB(255, 220, 150)
+	glow.Brightness = 1.5
+	glow.Range = 8
+	glow.Parent = root
+	return root
+end
 
 function FoodService.init(services)
 	MatchService, StatusService = services.MatchService, services.StatusService
@@ -52,13 +136,13 @@ end
 
 local function showInPantry(item: Item)
 	detach(item)
-	item.part.CFrame = CFrame.new(item.slot)
+	item.part.CFrame = CFrame.new(item.slot) * item.rot
 	item.part.Parent = folder
 end
 
 local function showDropped(item: Item, at: Vector3)
 	detach(item)
-	item.part.CFrame = CFrame.new(Vector3.new(at.X, 1, at.Z))
+	item.part.CFrame = CFrame.new(Vector3.new(at.X, 1, at.Z)) * item.rot
 	item.part.Parent = folder
 end
 
@@ -71,7 +155,7 @@ local function attach(item: Item, actor: Actor)
 	detach(item)
 	local p = item.part
 	p.Anchored = false
-	p.CFrame = actor.root.CFrame * CFrame.new(0, 3.5, 0)
+	p.CFrame = actor.root.CFrame * CFrame.new(0, 3.8, 0) * item.rot
 	local weld = Instance.new("WeldConstraint")
 	weld.Part0 = actor.root
 	weld.Part1 = p
@@ -152,12 +236,17 @@ local function step()
 
 		local status = item.food.status
 		if status == "Pantry" then
-			for _, a in actorsNear(item.part.Position, Config.FoodPickupRadius) do
-				local nextFood, err = FoodState.pickUp(item.food, actorInput(a))
-				if not err then
-					item.food = nextFood
-					attach(item, a)
-					break
+			-- Walk up to the counter: horizontal reach + height window (Rules/Reach).
+			for _, a in Actors.all() do
+				local body, slot = Actors.position(a), item.slot
+				if Reach.canGrab({ X = body.X, Y = body.Y, Z = body.Z }, { X = slot.X, Y = slot.Y, Z = slot.Z }, Config.FoodGrab) then
+					local nextFood, err = FoodState.pickUp(item.food, actorInput(a))
+					if not err then
+						item.food = nextFood
+						attach(item, a)
+						Remotes.announce(string.format("%s grabbed %s's %s!", a.name, string.upper(item.food.owner), string.lower(item.food.foodType)))
+						break
+					end
 				end
 			end
 		elseif status == "Carried" then
@@ -201,25 +290,17 @@ function FoodService.start()
 
 	for _, t in Config.Teams do
 		local pantry = MapService.kitchen(t.id).pantry
-		local n = #Config.FoodTypes * Config.PantrySlotsPerType
+		local offsets = Reach.slotOffsets(#Config.FoodTypes * Config.PantrySlotsPerType)
 		local index = 0
 		for _, foodType in Config.FoodTypes do
 			for _ = 1, Config.PantrySlotsPerType do
 				index += 1
-				local z = (index - (n + 1) / 2) * 3
-				local look = looks[foodType]
-				local p = Instance.new("Part")
-				p.Name = foodType
-				p.Shape = look.shape
-				p.Size = look.size
-				p.Color = look.color
-				p.Anchored = true
-				p.CanCollide = false
-				p.Massless = true
+				local o = offsets[index]
 				local item: Item = {
 					food = FoodState.new(t.id, foodType),
-					part = p,
-					slot = pantry + Vector3.new(0, 2.5, z),
+					part = buildFood(foodType),
+					rot = looks[foodType].root.offset,
+					slot = pantry + Vector3.new(o.X, o.Y, o.Z),
 				}
 				showInPantry(item)
 				table.insert(items, item)
