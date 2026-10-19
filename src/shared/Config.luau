@@ -22,6 +22,14 @@ Config.PostMatchSeconds = 8
 -- Food ----------------------------------------------------------------------
 Config.FoodTypes = { "Pizza", "Burger", "Taco", "Sushi" }
 Config.PantrySlotsPerType = 1 -- pieces of each food shown in a pantry at once
+-- Where each team's food sits (Jim 2026-10-19: "two at the base and two other
+-- items at the nearest buildings on top"). roof[k] sits on Arena part
+-- <Team>RoofFood<k>: k=1 north building (Sushi Bar / Sunny Apts),
+-- k=2 south building (Burger Joint / Arcade). Stairs lead up to each.
+Config.FoodLayout = {
+	base = { "Pizza", "Taco" },
+	roof = { "Sushi", "Burger" },
+}
 Config.PantryRestockSeconds = 4
 Config.DroppedFoodSeconds = 10
 Config.CarrierSpeedMultiplier = 0.75
@@ -186,6 +194,7 @@ Config.Audio = {
 		score = 0,
 		countdownBeep = 0, -- last seconds of the pre-match countdown
 		countdownGo = 0, -- match start
+		beacon = 0, -- near-food ping; 0 = built-in tick (Config.Beacon.builtinSound)
 		-- one per power, played when that power is used (keys = Config.Powers ids)
 		Yell = 0,
 		Fireball = 0,
@@ -197,6 +206,18 @@ Config.Audio = {
 		GreaseSpill = 0,
 	},
 	countdownBeepSeconds = 3,
+}
+
+-- Food beacon: "metal detector" ping when you're near enemy food you can grab.
+Config.Beacon = {
+	nearStuds = 8,
+	farStuds = 45,
+	slowSeconds = 1.0,
+	fastSeconds = 0.15,
+	lowPitch = 1.0,
+	highPitch = 1.8,
+	volume = 0.6,
+	builtinSound = "rbxasset://sounds/volume_slider.ogg", -- ships with Roblox
 }
 
 -- Input ---------------------------------------------------------------------
