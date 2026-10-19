@@ -34,7 +34,8 @@ function Pads.start()
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-		if root and humanoid and humanoid.Health > 0 then
+		-- No launch while stunned/frozen (server sets "Disabled").
+		if root and humanoid and humanoid.Health > 0 and character:GetAttribute("Disabled") ~= true then
 			local pos = root.Position
 			for _, pad in pads do
 				local dx, dz = pos.X - pad.position.X, pos.Z - pad.position.Z

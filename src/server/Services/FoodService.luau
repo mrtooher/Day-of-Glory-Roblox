@@ -142,7 +142,9 @@ end
 
 local function showDropped(item: Item, at: Vector3)
 	detach(item)
-	item.part.CFrame = CFrame.new(Vector3.new(at.X, 1, at.Z)) * item.rot
+	-- Drop at the carrier's feet, not always at ground level: a carrier tagged
+	-- on a rooftop (jump pads) would otherwise drop it inside the building.
+	item.part.CFrame = CFrame.new(Vector3.new(at.X, math.max(1, at.Y - 2), at.Z)) * item.rot
 	item.part.Parent = folder
 end
 

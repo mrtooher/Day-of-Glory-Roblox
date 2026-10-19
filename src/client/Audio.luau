@@ -101,7 +101,9 @@ playNextInPlaylist = function()
 	if count == 0 then
 		return
 	end
-	local roll = math.random(1, math.max(1, count - 1))
+	-- First pick: any song (so it doesn't always start with song 1);
+	-- after that: any song except the one that just played.
+	local roll = if trackIndex == nil then math.random(1, count) else math.random(1, math.max(1, count - 1))
 	trackIndex = AudioRules.nextIndex(count, trackIndex, roll)
 	local track = A.playlist[trackIndex :: number]
 	playTrack(track.id, track.name)
@@ -113,6 +115,7 @@ local function setMusicMode(mode: string)
 		return
 	end
 	musicMode = mode
+	failedInARow = 0 -- a new phase gets a fresh set of load attempts
 	if mode == "playlist" then
 		music.Looped = false
 		playNextInPlaylist()

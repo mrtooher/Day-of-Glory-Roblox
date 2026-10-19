@@ -25,7 +25,7 @@ src/server/   → ServerScriptService.Server
                           TagService, CharacterService, BotService
 src/client/   → StarterPlayer.StarterPlayerScripts.Client
   Main.client.luau        boots the client modules
-  Hud, PowerButtons, CharacterSelect, Visibility, PowerFx, Audio
+  Hud, PowerButtons, CharacterSelect, Visibility, PowerFx, Audio, Pads, GameFeel
 tests/                    Lune test runner + specs for Rules, Powers and Config
 ```
 

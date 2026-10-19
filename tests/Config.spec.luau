@@ -34,4 +34,10 @@ return function(t)
 	t.test("team slots fit within character limits", function()
 		t.truthy(#Config.Characters * Config.MaxSameCharacterPerTeam >= Config.MaxPlayersPerTeam)
 	end)
+
+	t.test("jump pads clear the tallest roof beside a pad (Apartments parapet 25.2)", function()
+		local g = 196.2 -- Workspace.Gravity default
+		local apex = Config.Pads.jumpVelocity ^ 2 / (2 * g)
+		t.truthy(apex >= 25.2 + 1, "apex " .. apex)
+	end)
 end

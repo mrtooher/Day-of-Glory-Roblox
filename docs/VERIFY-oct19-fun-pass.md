@@ -8,8 +8,8 @@
 
 - Studio opened the new build: `~/Downloads/DayOfGlory-music.rbxl` mtime `2026-10-19T11:32:23-0400`; Studio log `20261019T153452Z` names `DayOfGlory-music.rbxl`.
 - All 3 songs are Jim's: economy API → `Feast for your life` / `Kishi In My Kuna` / `Neon Horizon`, creator `Nuggetdog447`, created 15:06Z / 15:25Z / 15:25Z.
-- Pickup geometry: `RedPantry` is a solid block `Size (10,4,16)` at `(-180,2,0)`; food slots at `pantry + (0,2.5,z)` = y 4.5 on its top; `RedCounter` (x -178..-176) in front; pickup = 3D distance root→food ≤ `FoodPickupRadius 4`. Nearest standing root ≈ x -175 → distance ≥ 5.2. Food unreachable from the floor.
-- Lune can execute `MapBuildings.buildArena` offline (`tools/arena-check/probe.luau` → `parts 78 pantry <Vector3(-180, 2, 0)>`).
+- Pickup geometry (OLD map, commit 39aa1a4, before this run): `RedPantry` is a solid block `Size (10,4,16)` at `(-180,2,0)`; food slots at `pantry + (0,2.5,z)` = y 4.5 on its top; `RedCounter` (x -178..-176) in front; pickup = 3D distance root→food ≤ `FoodPickupRadius 4`. Nearest standing root ≈ x -175 → distance ≥ 5.2. Food unreachable from the floor.
+- Lune can execute `MapBuildings.buildArena` offline (throwaway `tools/arena-check/probe.luau`, deleted after; replaced by `run.luau` → `parts 78 pantry <Vector3(-180, 2, 0)>` on the old map).
 
 ## Stage map
 
@@ -77,8 +77,24 @@ Stage 8: double-check panel.
 | 40 | 7 | Studio run 4 (stuck fix) server log | PASS | `grep -c FLog::CreatorError` → `0`; `[Bot] Bot 7 unstick at (55,4,-34)` then carriers progress (`Bot 1 ... return pos=(176,...)` → `(-18,3,-50)` carrying=true) |
 | 41 | 7 | same: unstick firing on defenders standing at their guard/chase point | FAIL | `Bot 4 unstick at (-116,3,0)` ×4 (at guard point -117,0) → skip unstick within 6 studs of target |
 | 42 | 6 | after fix: `luau-lsp` + `lune run tests/run` + arena check + `rojo build` | PASS | `lsp exit=0` · `TOTAL: 125 passed, 0 failed` · `ARENA CHECK: 52 passed, 0 failed` · `Built project to DayOfGlory-test.rbxl` |
+| 43 | 8 | double-check finding: jump apex vs Apartments roof; new Config.spec test with OLD `jumpVelocity = 95` | FAIL | `apex 22.999490316004078: expected truthy, got false` |
+| 44 | 8 | same test with `jumpVelocity = 105` + full suite + `luau-lsp` + arena check | PASS | `TOTAL: 126 passed, 0 failed` · `lsp exit=0` · `ARENA CHECK: 52 passed, 0 failed` |
 
 ## Double-check
+
+```
+Double-check: 13 claims + 6 requirements.
+PASS: 13 claims, 6 requirements (R1–R6 PASS with caveats). FIXED after FAIL: 4 (logic issues found by the requirements checker, listed below). UNVERIFIABLE: Studio-only rows (22–26, 30–41) from the checkers' side; music audibility of Neon Horizon.
+Checkers: 1× Haiku (mechanical), 1× Sonnet (requirements/logic), 1 Haiku re-check round (C1–C5 all CONFIRMED)
+FINAL-COLD-CHECK: no (full panel ran)
+```
+
+- Fixed: dropped food always placed at y 1 → a carrier tagged on a rooftop dropped it inside the building → now at the carrier's feet (`max(1, Y - 2)`).
+- Fixed: jump pad apex ≈ 23 studs could not reach the Apartments roof (25.2) → `jumpVelocity` 105 (apex ≈ 28); Config.spec guards it (rows 43–44).
+- Fixed: jump pads launched stunned/frozen players → skipped while `Disabled`.
+- Fixed: with 2 songs the first pick was always song 1 (Feast), and `failedInARow` never reset per phase → first pick random among all; counter resets on mode change.
+- Not changed (reviewed): pickup always takes the first reachable slot (every food is worth 1 point); `PadCooldown.forget` never called (slow growth of a small table, bot ids only).
+- Not changed (by design, flagged to Jim): pickup only works in the Playing phase, which needs 2 humans (`MinHumansToStart = 2`); a solo Play test stays in "Waiting".
 
 ## Self-review (step 4)
 
