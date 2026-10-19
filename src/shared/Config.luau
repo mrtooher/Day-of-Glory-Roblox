@@ -176,7 +176,7 @@ Config.Audio = {
 	-- Names from the Roblox asset details (creator Nuggetdog447).
 	playlist = {
 		{ id = 140350912499061, name = "Feast for your life" },
-		{ id = 107858682693210, name = "Kishi In My Kuna" },
+		-- 107858682693210 "Kishi In My Kuna" removed: taken down by Roblox moderation 2026-10-19
 		{ id = 89048811438062, name = "Neon Horizon" },
 	},
 	loadTimeoutSeconds = 10, -- skip a song that hasn't loaded by then

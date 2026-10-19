@@ -68,12 +68,14 @@ return function(t)
 		t.eq(AudioRules.countdownCue(2.5, 2.4, 3), nil) -- same second, no repeat
 	end)
 
-	t.test("real config: 3-song playlist, every power has an sfx slot", function()
-		t.eq(#Config.Audio.playlist, 3)
+	t.test("real config: 2-song playlist, every power has an sfx slot", function()
+		t.eq(#Config.Audio.playlist, 2)
 		t.eq(Config.Audio.playlist[1].id, 140350912499061)
-		t.eq(Config.Audio.playlist[2].id, 107858682693210)
-		t.eq(Config.Audio.playlist[3].id, 89048811438062)
-		t.eq(Config.Audio.playlist[2].name, "Kishi In My Kuna")
+		t.eq(Config.Audio.playlist[2].id, 89048811438062)
+		t.eq(Config.Audio.playlist[2].name, "Neon Horizon")
+		for _, track in Config.Audio.playlist do
+			t.truthy(track.id ~= 107858682693210, "moderated song not in playlist")
+		end
 		t.truthy(Config.Audio.loadTimeoutSeconds > 0, "load timeout set")
 		t.eq(AudioRules.musicMode("Playing", Config.Audio), "playlist")
 		for id in Config.Powers do
