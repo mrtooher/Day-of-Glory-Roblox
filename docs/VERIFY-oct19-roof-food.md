@@ -55,6 +55,7 @@ Stage 6: double-check panel.
 | 23 | 6 | double-check finding: roof entry unchecked; new harness guard on current map | PASS | `ARENA CHECK: 96 passed, 0 failed` |
 | 24 | 6 | same guard with Apts `sideGap` moved off the landing (temp edit, restored) | FAIL (intended) | `FAIL BlueRoofStair1 opens onto the roof, blocked by: Parapet` · `95 passed, 1 failed` |
 | 25 | 6 | after copy-offset, hint, Qwen-note, comment fixes: `luau-lsp` + tests + arena | PASS | `lsp exit=0` · `TOTAL: 134 passed, 0 failed` · `ARENA CHECK: 96 passed, 0 failed` |
+| 26 | 4 | Project handoff `DayOfGlory-Roblox-HANDOFF.md` rewritten via `Projects project_write` | PASS | `"replaced":true` |
 
 ## Double-check
 
