@@ -36,6 +36,33 @@ function PowerButtons.start()
 		request:FireServer()
 	end)
 
+	-- Short message above the button when the server says the power didn't fire.
+	local denied = Instance.new("TextLabel")
+	denied.Name = "DeniedMessage"
+	denied.AnchorPoint = Vector2.new(1, 1)
+	denied.Position = UDim2.new(1, -20, 1, -88)
+	denied.Size = UDim2.fromOffset(260, 32)
+	denied.BackgroundTransparency = 1
+	denied.Font = Enum.Font.GothamBlack
+	denied.TextScaled = true
+	denied.TextColor3 = Color3.fromRGB(255, 90, 90)
+	denied.TextStrokeTransparency = 0.3
+	denied.TextXAlignment = Enum.TextXAlignment.Right
+	denied.Text = ""
+	denied.Parent = gui
+	local deniedToken = 0
+	local deniedEvent = remotes:WaitForChild(Net.PowerDenied) :: RemoteEvent
+	deniedEvent.OnClientEvent:Connect(function(message: string)
+		deniedToken += 1
+		local mine = deniedToken
+		denied.Text = message
+		task.delay(1.5, function()
+			if deniedToken == mine then
+				denied.Text = ""
+			end
+		end)
+	end)
+
 	gui.Parent = player:WaitForChild("PlayerGui")
 
 	local keys: { Enum.KeyCode } = {}

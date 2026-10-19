@@ -74,8 +74,8 @@ Config.Powers = {
 	},
 	Vanish = {
 		displayName = "VANISH",
-		cooldown = 5,
-		durationSeconds = 3,
+		cooldown = 10, -- longer than the vanish so Vex can't stay invisible forever
+		durationSeconds = 5,
 	},
 	SlowMo = {
 		displayName = "SLOW-MO",
@@ -88,7 +88,8 @@ Config.Powers = {
 	Whistle = {
 		displayName = "STUN GUN",
 		cooldown = 5,
-		range = 30,
+		speed = 80, -- bolt fired straight ahead; stuns the first enemy it hits
+		range = 60,
 		freezeSeconds = 2,
 	},
 	Sniff = {
@@ -134,6 +135,10 @@ Config.Map = {
 	burgerSpawns = { { x = 0, z = 30 }, { x = 0, z = -30 } },
 }
 
+-- Mid-match character switch only within this many studs of your own spawn,
+-- and not while carrying food. Between matches you can switch anywhere.
+Config.HomeSwitchRadius = 20
+
 Config.FoodPickupRadius = 4 -- studs from a food piece to grab/touch it
 Config.DropoffRadius = 6
 Config.BurgerPickupRadius = 4
@@ -148,17 +153,20 @@ Config.Bots = {
 
 -- Audio ---------------------------------------------------------------------
 -- Roblox asset IDs (numbers). 0 = no sound yet: that sound is skipped.
--- Music plays in the listed phases and loops; it keeps playing (no restart)
--- when the phase moves from Intermission to Playing.
+-- Music plays in the listed phases; it keeps playing (no restart) when the
+-- phase moves from Intermission to Playing.
 Config.Audio = {
 	musicVolume = 0.5,
 	sfxVolume = 0.8,
 	fadeSeconds = 1,
 	musicPhases = { "Intermission", "Playing" },
-	music = {
-		match = 140350912499061, -- "Feast for your life" by Jim
-		win = 0, -- PostMatch; 0 = silence after the match
+	-- Playlist plays in musicPhases, shuffled, next song when one ends.
+	playlist = {
+		140350912499061, -- "Feast for your life" by Jim
+		107858682693210,
+		89048811438062,
 	},
+	winMusic = 0, -- PostMatch; 0 = silence after the match
 	sfx = {
 		score = 0,
 		countdownBeep = 0, -- last seconds of the pre-match countdown

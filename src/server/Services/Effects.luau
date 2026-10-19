@@ -55,26 +55,6 @@ function Effects.flash(pos: Vector3, radius: number, color: Color3)
 	Debris:AddItem(p, 0.4)
 end
 
--- A short glowing bolt between two points (Cop's stun gun).
-function Effects.zap(from: Vector3, to: Vector3, color: Color3)
-	local length = (to - from).Magnitude
-	if length < 0.1 then
-		return
-	end
-	local p = Instance.new("Part")
-	p.Name = "Zap"
-	p.Size = Vector3.new(0.3, 0.3, length)
-	p.CFrame = CFrame.lookAt(from, to) * CFrame.new(0, 0, -length / 2)
-	p.Anchored = true
-	p.CanCollide = false
-	p.CanQuery = false
-	p.CanTouch = false
-	p.Material = Enum.Material.Neon
-	p.Color = color
-	p.Parent = folder
-	Debris:AddItem(p, 0.2)
-end
-
 type ProjectileSpec = {
 	kind: string,
 	speed: number,
@@ -112,23 +92,34 @@ function Effects.launchProjectile(owner: Actor, spec: ProjectileSpec)
 		trail.Attachment0 = att0
 		trail.Attachment1 = att1
 	elseif spec.kind == "Whistle" then
-		p.Shape = Enum.PartType.Cylinder
-		p.Size = Vector3.new(0.2, 1.5, 0.2)
-		p.Color = Color3.fromRGB(255, 255, 0)
+		-- Stun gun bolt: bright electric-yellow ball with a long glowing trail.
+		p.Shape = Enum.PartType.Ball
+		p.Size = Vector3.new(1.2, 1.2, 1.2)
+		p.Color = Color3.fromRGB(255, 245, 90)
 		p.Material = Enum.Material.Neon
-		
-		local beam = Instance.new("Beam")
-		beam.Color = ColorSequence.new(Color3.fromRGB(255, 255, 100))
-		beam.Width0 = 0.5
-		beam.Width1 = 0.5
-		beam.Parent = p
+
+		local light = Instance.new("PointLight")
+		light.Color = Color3.fromRGB(255, 240, 120)
+		light.Brightness = 3
+		light.Range = 10
+		light.Parent = p
+
+		local trail = Instance.new("Trail")
+		trail.Color = ColorSequence.new(Color3.fromRGB(255, 255, 160), Color3.fromRGB(120, 200, 255))
+		trail.WidthScale = NumberSequence.new(1, 0)
+		trail.Transparency = NumberSequence.new(0, 1)
+		trail.Lifetime = 0.35
+		trail.LightEmission = 1
+		trail.FaceCamera = true
 		local att0 = Instance.new("Attachment")
+		att0.Position = Vector3.new(0, 0.4, 0)
 		att0.Parent = p
 		local att1 = Instance.new("Attachment")
-		att1.Position = Vector3.new(0, 0, -1.5)
+		att1.Position = Vector3.new(0, -0.4, 0)
 		att1.Parent = p
-		beam.Attachment0 = att0
-		beam.Attachment1 = att1
+		trail.Attachment0 = att0
+		trail.Attachment1 = att1
+		trail.Parent = p
 	elseif spec.kind == "PizzaToss" then
 		p.Shape = Enum.PartType.Cylinder
 		p.Size = Vector3.new(0.2, 2, 2)

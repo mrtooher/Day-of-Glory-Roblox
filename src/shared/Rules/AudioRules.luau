@@ -5,7 +5,8 @@ local AudioRules = {}
 
 export type AudioConfig = {
 	musicPhases: { string },
-	music: { match: number, win: number },
+	playlist: { number },
+	winMusic: number,
 	sfx: { [string]: number },
 	countdownBeepSeconds: number,
 }
@@ -18,17 +19,31 @@ function AudioRules.assetUri(id: number?): string?
 	return string.format("rbxassetid://%.0f", id)
 end
 
--- Which music track (asset id, 0 = none) should be playing in this phase.
-function AudioRules.musicFor(phase: string, audio: AudioConfig): number
+-- What should be playing in this phase: "playlist", "win", or "none".
+function AudioRules.musicMode(phase: string, audio: AudioConfig): string
 	for _, p in audio.musicPhases do
 		if p == phase then
-			return audio.music.match
+			return if #audio.playlist > 0 then "playlist" else "none"
 		end
 	end
-	if phase == "PostMatch" then
-		return audio.music.win
+	if phase == "PostMatch" and audio.winMusic > 0 then
+		return "win"
 	end
-	return 0
+	return "none"
+end
+
+-- Next shuffled playlist index. Never repeats `last` when there are 2+ songs.
+-- `roll` is a random integer in [1, count - 1] (or 1 when count <= 1).
+function AudioRules.nextIndex(count: number, last: number?, roll: number): number
+	if count <= 1 then
+		return 1
+	end
+	if last == nil or last < 1 or last > count then
+		return math.clamp(roll, 1, count)
+	end
+	-- Step 1..count-1 places past `last`, wrapping: never lands on `last`.
+	local step = math.clamp(roll, 1, count - 1)
+	return ((last - 1 + step) % count) + 1
 end
 
 -- Countdown cue when the whole-second count drops from prevLeft to left

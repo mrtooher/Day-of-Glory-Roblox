@@ -1,6 +1,7 @@
 --!strict
 -- Music and sound effects, played locally on each client.
--- All ids live in Config.Audio; an id of 0 is skipped.
+-- All ids live in Config.Audio; an id of 0 is skipped. Music = shuffled
+-- playlist, next song when one ends.
 -- SOUND button (bottom-left, next to CHARACTER) mutes / unmutes everything.
 
 local Players = game:GetService("Players")
@@ -20,7 +21,8 @@ local A = Config.Audio
 local musicGroup: SoundGroup
 local sfxGroup: SoundGroup
 local music: Sound
-local musicId = 0 -- asset id the music Sound is set to (0 = stopped)
+local musicMode = "none" -- "playlist" | "win" | "none"
+local trackIndex: number? = nil -- current playlist index
 local fadeTween: Tween?
 local muted = false
 
@@ -40,19 +42,9 @@ local function fadeTo(volume: number, onDone: (() -> ())?)
 	tween:Play()
 end
 
--- Switch the music to track `id` (0 = silence). Same track = keep playing.
-local function setMusic(id: number)
-	if id == musicId then
-		return
-	end
-	musicId = id
+local function playTrack(id: number)
 	local uri = AudioRules.assetUri(id)
 	if not uri then
-		fadeTo(0, function()
-			if musicId == 0 then
-				music:Stop()
-			end
-		end)
 		return
 	end
 	music:Stop()
@@ -61,6 +53,34 @@ local function setMusic(id: number)
 	music.TimePosition = 0
 	music:Play()
 	fadeTo(A.musicVolume)
+end
+
+local function playNextInPlaylist()
+	local count = #A.playlist
+	local roll = math.random(1, math.max(1, count - 1))
+	trackIndex = AudioRules.nextIndex(count, trackIndex, roll)
+	playTrack(A.playlist[trackIndex :: number])
+end
+
+-- Switch music mode. Same mode = keep playing (no restart).
+local function setMusicMode(mode: string)
+	if mode == musicMode then
+		return
+	end
+	musicMode = mode
+	if mode == "playlist" then
+		music.Looped = false
+		playNextInPlaylist()
+	elseif mode == "win" then
+		music.Looped = false
+		playTrack(A.winMusic)
+	else
+		fadeTo(0, function()
+			if musicMode == "none" then
+				music:Stop()
+			end
+		end)
+	end
 end
 
 local function playSfx(name: string)
@@ -132,10 +152,15 @@ function Audio.start()
 
 	music = Instance.new("Sound")
 	music.Name = "Music"
-	music.Looped = true
+	music.Looped = false
 	music.Volume = 0
 	music.SoundGroup = musicGroup
 	music.Parent = SoundService
+	music.Ended:Connect(function()
+		if musicMode == "playlist" then
+			playNextInPlaylist()
+		end
+	end)
 
 	makeMuteButton()
 
@@ -168,7 +193,7 @@ function Audio.start()
 	-- Music by phase, countdown beeps, and the "go" sound.
 	local lastPhase = state:GetAttribute("Phase") or "Waiting"
 	local lastLeft = math.huge
-	setMusic(AudioRules.musicFor(lastPhase, A))
+	setMusicMode(AudioRules.musicMode(lastPhase, A))
 	while true do
 		local phase = state:GetAttribute("Phase") or "Waiting"
 		if phase ~= lastPhase then
@@ -177,7 +202,7 @@ function Audio.start()
 			end
 			lastPhase = phase
 			lastLeft = math.huge
-			setMusic(AudioRules.musicFor(phase, A))
+			setMusicMode(AudioRules.musicMode(phase, A))
 		end
 		if phase == "Intermission" then
 			local endsAt = state:GetAttribute("PhaseEndsAt") or 0
