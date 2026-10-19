@@ -70,8 +70,9 @@ end
 
 local function makeModel(team: string): Model
 	local color = MapService.teamColor(team)
+	-- A plain avatar (no accessories or clothing); LookService dresses it as
+	-- the bot's Day of Glory character.
 	local description = Instance.new("HumanoidDescription")
-	description.TorsoColor = color.Color
 	local ok, model = pcall(function()
 		return Players:CreateHumanoidModelFromDescriptionAsync(
 			description,

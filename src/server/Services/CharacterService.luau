@@ -11,6 +11,7 @@ local TeamPick = require(ReplicatedStorage.Shared.Rules.TeamPick)
 local Remotes = require(script.Parent.Remotes)
 local MapService = require(script.Parent.MapService)
 local Actors = require(script.Parent.Actors)
+local LookService = require(script.Parent.LookService)
 type Actor = Actors.Actor
 
 local CharacterService = {}
@@ -88,6 +89,7 @@ end
 
 function CharacterService.setCharacter(actor: Actor, characterId: string)
 	Actors.setCharacterId(actor, characterId)
+	LookService.apply(actor.model, characterId, MapService.teamColor(actor.team).Color)
 	PowerService.assign(actor)
 	CharacterService.decorate(actor)
 	if actor.player then
