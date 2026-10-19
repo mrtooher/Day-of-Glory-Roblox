@@ -16,7 +16,7 @@ src/shared/   → ReplicatedStorage.Shared
   Net.luau                remote / state names shared by server and client
   Rules/                  pure game rules, no Roblox API calls (unit tested)
     Scoring, MatchEnd, MatchPhase, Territory, TagResolution,
-    FoodState, TeamPick, Movement, BotBrain
+    FoodState, TeamPick, Movement, BotBrain, AudioRules
   Powers/                 PowerBase (shared cooldown class) + one module per power
 src/server/   → ServerScriptService.Server
   Main.server.luau        boots the services
@@ -25,7 +25,7 @@ src/server/   → ServerScriptService.Server
                           TagService, CharacterService, BotService
 src/client/   → StarterPlayer.StarterPlayerScripts.Client
   Main.client.luau        boots the client modules
-  Hud, PowerButtons, CharacterSelect, Visibility
+  Hud, PowerButtons, CharacterSelect, Visibility, PowerFx, Audio
 tests/                    Lune test runner + specs for Rules, Powers and Config
 ```
 
@@ -50,7 +50,16 @@ Max 2 of the same character per team. A human who picks a character a bot is
 using takes it; the bot switches. Characters can be changed between matches.
 
 Controls: power = **Q** (keyboard), **X** (gamepad), or the on-screen button on
-phones/tablets. The **CHARACTER** button (bottom-left) opens the picker.
+phones/tablets. The **CHARACTER** button (bottom-left) opens the picker. The **SOUND** button
+next to it mutes / unmutes music and effects.
+
+## Audio
+
+All sound ids live in `Config.Audio` (an id of 0 is skipped). Match music
+("Feast for your life", asset 140350912499061) plays on loop through the
+pre-match countdown and the match, and fades out when the match ends. Effect
+slots (score, countdown beeps, one per power) are wired but empty until ids
+are added.
 
 ## Tools
 
@@ -66,7 +75,7 @@ rokit install
 lune run tests/run
 ```
 
-Confirmed working in this repo with Lune 0.10.4: `TOTAL: 92 passed, 0 failed`.
+Confirmed working in this repo with Lune 0.10.4: `TOTAL: 102 passed, 0 failed`.
 The runner exits non-zero on any failure, when no tests ran, or when a
 `*.spec.luau` file exists but is not listed in `tests/run.luau`.
 

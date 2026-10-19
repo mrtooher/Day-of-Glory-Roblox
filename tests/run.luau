@@ -18,6 +18,7 @@ local specs: { [string]: any } = {
 	["Rules/Movement.spec"] = require("./Rules/Movement.spec"),
 	["Powers/Powers.spec"] = require("./Powers/Powers.spec"),
 	["Rules/BotBrain.spec"] = require("./Rules/BotBrain.spec"),
+	["Rules/AudioRules.spec"] = require("./Rules/AudioRules.spec"),
 	["Config.spec"] = require("./Config.spec"),
 	["Looks.spec"] = require("./Looks.spec"),
 }

@@ -146,6 +146,36 @@ Config.Bots = {
 	powerUseChance = 0.35, -- per think tick when a target is in range
 }
 
+-- Audio ---------------------------------------------------------------------
+-- Roblox asset IDs (numbers). 0 = no sound yet: that sound is skipped.
+-- Music plays in the listed phases and loops; it keeps playing (no restart)
+-- when the phase moves from Intermission to Playing.
+Config.Audio = {
+	musicVolume = 0.5,
+	sfxVolume = 0.8,
+	fadeSeconds = 1,
+	musicPhases = { "Intermission", "Playing" },
+	music = {
+		match = 140350912499061, -- "Feast for your life" by Jim
+		win = 0, -- PostMatch; 0 = silence after the match
+	},
+	sfx = {
+		score = 0,
+		countdownBeep = 0, -- last seconds of the pre-match countdown
+		countdownGo = 0, -- match start
+		-- one per power, played when that power is used (keys = Config.Powers ids)
+		Yell = 0,
+		Fireball = 0,
+		Vanish = 0,
+		SlowMo = 0,
+		Whistle = 0,
+		Sniff = 0,
+		PizzaToss = 0,
+		GreaseSpill = 0,
+	},
+	countdownBeepSeconds = 3,
+}
+
 -- Input ---------------------------------------------------------------------
 Config.PowerKeys = { "Q", "ButtonX" } -- Enum.KeyCode names
 
