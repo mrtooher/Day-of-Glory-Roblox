@@ -52,6 +52,7 @@ Stage 8: double-check panel.
 | 15 | 5 | lead re-run: `luau-lsp analyze ... src` + `lune run tests/run` after worker B | PASS | `lsp exit=0` · `TOTAL: 119 passed, 0 failed` |
 | 16 | 5 | Mac: `ls /Applications/RobloxStudio.app/Contents/Resources/content/textures/particles/` (worker flagged `rbxasset://textures/particles/smoke_main.dds` as unverifiable) | PASS | `smoke_main.dds` listed |
 | 17 | 5 | `git diff Effects.luau` vs `Powers/GreaseSpill.luau`: trap fx now enemies-only; is gameplay unchanged? | PASS | `spec.onEnter(Actors.view(a))` still called for every actor; GreaseSpill slows only `target.team ~= myTeam`, so fx now matches the effect |
+| 18 | 1 | Jim: Roblox removed audio 107858682693210; dropped from playlist; `lune run tests/run` (test asserts it's absent, playlist = 2) | PASS | `Rules/AudioRules.spec 9 passed, 0 failed` · `TOTAL: 119 passed, 0 failed` |
 
 ## Double-check
 
