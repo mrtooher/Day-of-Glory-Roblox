@@ -107,4 +107,22 @@ return function(t)
 		t.eq(x, 177)
 		t.eq(z, 0)
 	end)
+
+	t.test("stuck: moving resets the window", function()
+		local isStuck, restart = BotBrain.stuck(3, 0, 1, 2, 2.5)
+		t.falsy(isStuck)
+		t.truthy(restart)
+	end)
+
+	t.test("stuck: barely moving, not long enough yet", function()
+		local isStuck, restart = BotBrain.stuck(0.5, 0, 2, 2, 2.5)
+		t.falsy(isStuck)
+		t.falsy(restart)
+	end)
+
+	t.test("stuck: barely moving for the full window", function()
+		local isStuck, restart = BotBrain.stuck(0.5, 0, 2.5, 2, 2.5)
+		t.truthy(isStuck)
+		t.truthy(restart)
+	end)
 end

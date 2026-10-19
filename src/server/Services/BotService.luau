@@ -32,6 +32,13 @@ local CHASE_RADIUS = 25
 local LANES = { 0, 70, -70 } -- z of main street, north alley, south alley
 local LANE_APPROACH = 45 -- leave the lane this many studs (X) before the target
 local laneOf: { [string]: number } = {}
+local lastLog: { [string]: number } = {}
+-- Stuck detection (Studio test 2026-10-19: bots snagged on building corners
+-- for 30+ s with path=Success).
+type Watch = { pos: Vector3, since: number }
+local watch: { [string]: Watch } = {}
+local STUCK_MOVE = 2 -- studs
+local STUCK_SECONDS = 2.5
 
 function BotService.init(services)
 	MatchService = services.MatchService
@@ -157,6 +164,36 @@ local function think(bot: Actor, path: Path)
 	local ok = pcall(function()
 		path:ComputeAsync(pos, target)
 	end)
+	-- Unstick: jump and sidestep to a random nearby spot for one tick.
+	local w = watch[bot.id]
+	if not w then
+		w = { pos = pos, since = now }
+		watch[bot.id] = w
+	end
+	local isStuck, restart = BotBrain.stuck((pos - w.pos).Magnitude, w.since, now, STUCK_MOVE, STUCK_SECONDS)
+	if restart then
+		w.pos, w.since = pos, now
+	end
+	if isStuck and decision.action ~= "guard" then
+		local angle = math.random() * math.pi * 2
+		bot.humanoid.Jump = true
+		bot.humanoid:MoveTo(pos + Vector3.new(math.cos(angle) * 8, 0, math.sin(angle) * 8))
+		if Config.Bots.debugLogSeconds > 0 then
+			print(string.format("[Bot] %s unstick at (%.0f,%.0f,%.0f)", bot.name, pos.X, pos.Y, pos.Z))
+		end
+		return
+	end
+
+	local every = Config.Bots.debugLogSeconds
+	if every > 0 and now - (lastLog[bot.id] or 0) >= every then
+		lastLog[bot.id] = now
+		print(string.format(
+			"[Bot] %s %s %s %s pos=(%.0f,%.0f,%.0f) target=(%.0f,%.0f) path=%s carrying=%s",
+			bot.name, bot.team, tostring(bot.role), decision.action,
+			pos.X, pos.Y, pos.Z, target.X, target.Z,
+			if ok then path.Status.Name else "error", tostring(bot.carrying)
+		))
+	end
 	if ok and path.Status == Enum.PathStatus.Success then
 		local waypoints = path:GetWaypoints()
 		-- Aim a few waypoints ahead so the bot keeps moving between re-plans.
@@ -178,6 +215,8 @@ end
 
 local function despawn(bot: Actor)
 	laneOf[bot.id] = nil
+	watch[bot.id] = nil
+	lastLog[bot.id] = nil
 	FoodService.dropCarried(bot)
 	Actors.remove(bot)
 	bot.model:Destroy()
@@ -221,7 +260,7 @@ local function spawnBot(team: string)
 
 	task.spawn(function()
 		local path = PathfindingService:CreatePath({
-			AgentRadius = 2,
+			AgentRadius = 3, -- 2 hugged walls; bots snagged on building corners
 			AgentHeight = 5,
 			AgentCanJump = true,
 		})

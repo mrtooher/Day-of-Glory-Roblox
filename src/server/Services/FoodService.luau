@@ -244,7 +244,9 @@ local function step()
 					if not err then
 						item.food = nextFood
 						attach(item, a)
-						Remotes.announce(string.format("%s grabbed %s's %s!", a.name, string.upper(item.food.owner), string.lower(item.food.foodType)))
+						local msg = string.format("%s grabbed %s's %s!", a.name, string.upper(item.food.owner), string.lower(item.food.foodType))
+						print("[Food] " .. msg)
+						Remotes.announce(msg)
 						break
 					end
 				end

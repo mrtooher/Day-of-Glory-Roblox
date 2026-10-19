@@ -62,6 +62,20 @@ function BotBrain.laneWaypoint(posX: number, targetX: number, targetZ: number, l
 	return targetX - dir * approach, laneZ
 end
 
+-- Stuck check: a bot that should be moving but has covered less than
+-- `minMove` studs since `sinceTime` for `seconds` is stuck (e.g. snagged on
+-- a building corner while pathfinding still reports success).
+-- Returns stuck?, and whether to restart the measuring window.
+function BotBrain.stuck(moved: number, sinceTime: number, now: number, minMove: number, seconds: number): (boolean, boolean)
+	if moved >= minMove then
+		return false, true -- moving fine: restart the window from here
+	end
+	if now - sinceTime >= seconds then
+		return true, true
+	end
+	return false, false
+end
+
 -- Roles for `count` bots: about `defenderShare` defend (at least one once there
 -- are two or more bots), the rest raid.
 function BotBrain.assignRoles(count: number, defenderShare: number): { Role }

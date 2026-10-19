@@ -64,6 +64,16 @@ Stage 8: double-check panel.
 | 27 | 4 | `lune run tests/run` with new `BotBrain.laneWaypoint` tests (incl. no ping-pong at the lane point) | PASS | `Rules/BotBrain.spec 12 passed, 0 failed` · `TOTAL: 122 passed, 0 failed` |
 | 28 | 3 | arena harness + new alley-lane zones | FAIL | `north alley lane blocked by: Dumpster, Dumpster, BackStep...` |
 | 29 | 3 | same after moving dumpsters to z ±77.5 and lane floor y 0.8 (0.6 door step walkable) | PASS | `ARENA CHECK: 52 passed, 0 failed` |
+| 30 | 7 | Studio run 2: screenshot in play after lighting change | PASS | Taco Town interior renders with normal colours; no white wash-out |
+| 31 | 7 | Studio run 2: edit-mode preview of `MapBuildings.buildArena` (command bar), screenshots of streets | PASS | Police (light bar, badge, squad car), Big Bucks Bank ($ coin, columns), crosswalks, lamps, trees, DAY OF GLORY arch, JUMP pads visible |
+| 32 | 7 | Studio run 2: press Q as Vex | PASS | ghost Vex + `INVISIBLE 5` banner + `INVISIBLE FOR 5 SECONDS!`; button shows `10` cooldown |
+| 33 | 7 | Studio run 2: CHARACTER → Cop while in base mid-match | PASS | panel closed; nameplate `COP`; button `STUN GUN` |
+| 34 | 7 | Studio run 2: STUN GUN button | PASS | `ZAP!` + glowing bolt leaving the Cop; button `5` cooldown |
+| 35 | 7 | Studio run 2: score after ~3 min with lanes | FAIL | `RED 0/10 BLUE 0/10` at 7:13 → added `[Bot]`/`[Food]` debug log |
+| 36 | 2,7 | Studio run 3 server log grep `[Food]` | PASS | `[Food] Bot 1 grabbed BLUE's pizza!` · `[Food] Bot 5 grabbed RED's burger!` (pantry pickup works in-engine) |
+| 37 | 7 | Studio run 3 HUD | PASS | `RED 1/10` at 7:03: first delivery ever observed (grab → carry → score loop) |
+| 38 | 7 | Studio run 3 server log: carrier stationary 30+ s | FAIL | `Bot 2 ... return pos=(-55,4,64) ... path=Success carrying=true` ×6, `Bot 1 ... pos=(135,4,-66)` ×6; Lune box query: on `Plinth Bank x -85.5..-54.5 y 0..0.8` / `Plinth Arcade` corners |
+| 39 | 4 | `lune run tests/run` with `BotBrain.stuck` tests + `luau-lsp` | PASS | `Rules/BotBrain.spec 15 passed, 0 failed` · `TOTAL: 125 passed, 0 failed` · `lsp exit=0` |
 
 ## Double-check
 
