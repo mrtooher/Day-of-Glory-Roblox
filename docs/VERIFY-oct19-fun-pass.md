@@ -48,6 +48,10 @@ Stage 8: double-check panel.
 | 11 | 4 | `luau-lsp analyze ... GameFeel.luau Main.client.luau` (first draft) | FAIL | `GameFeel.luau(247,5): TypeError: Key 'Enabled' not found in class 'Instance'` + 3 nil-safety errors |
 | 12 | 4 | same, after storing the BillboardGui and narrowing nils (2nd attempt) | FAIL | `GameFeel.luau(261,5): TypeError: Value of type 'Attachment?' could be nil` |
 | 13 | 4 | same, after typed `source: Attachment` local | PASS | `exit=0` |
+| 14 | 5 | worker B: `luau-lsp analyze ... src` with a property misspelled in each edited file (proves checker covers them) | FAIL (intended) | `Effects.luau(138,2): TypeError: Key 'LightEmisson' not found in class 'ParticleEmitter'` · `PowerFx.luau(668,4): TypeError: Key 'OutlineTransparancy' not found in class 'Highlight'` (reverted) |
+| 15 | 5 | lead re-run: `luau-lsp analyze ... src` + `lune run tests/run` after worker B | PASS | `lsp exit=0` · `TOTAL: 119 passed, 0 failed` |
+| 16 | 5 | Mac: `ls /Applications/RobloxStudio.app/Contents/Resources/content/textures/particles/` (worker flagged `rbxasset://textures/particles/smoke_main.dds` as unverifiable) | PASS | `smoke_main.dds` listed |
+| 17 | 5 | `git diff Effects.luau` vs `Powers/GreaseSpill.luau`: trap fx now enemies-only; is gameplay unchanged? | PASS | `spec.onEnter(Actors.view(a))` still called for every actor; GreaseSpill slows only `target.team ~= myTeam`, so fx now matches the effect |
 
 ## Double-check
 
