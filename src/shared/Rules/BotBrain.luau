@@ -1,0 +1,63 @@
+--!strict
+-- Bot decision making, free of Roblox APIs. Positions are opaque values
+-- (Vector3 in game, anything in tests); the bot service measures distances.
+
+export type Role = "raider" | "defender"
+export type Action = "return" | "raid" | "recover" | "chase" | "guard"
+
+export type Input<P> = {
+	role: Role,
+	carrying: boolean,
+	homeDropoff: P,
+	enemyPantry: P,
+	guardPoint: P,
+	intruder: { position: P, distance: number }?, -- nearest enemy in our territory
+	droppedTeamFood: P?, -- food our team dropped, waiting to be picked up
+	chaseRadius: number, -- raiders only chase intruders this close
+}
+
+export type Decision<P> = {
+	action: Action,
+	target: P,
+}
+
+local BotBrain = {}
+
+function BotBrain.decide<P>(input: Input<P>): Decision<P>
+	if input.role ~= "raider" and input.role ~= "defender" then
+		error("BotBrain.decide: bad role " .. tostring(input.role))
+	end
+
+	if input.carrying then
+		return { action = "return", target = input.homeDropoff }
+	end
+
+	local intruder = input.intruder
+	if input.role == "defender" then
+		if intruder then
+			return { action = "chase", target = intruder.position }
+		end
+		return { action = "guard", target = input.guardPoint }
+	end
+
+	if input.droppedTeamFood ~= nil then
+		return { action = "recover", target = input.droppedTeamFood :: P }
+	end
+	if intruder and intruder.distance <= input.chaseRadius then
+		return { action = "chase", target = intruder.position }
+	end
+	return { action = "raid", target = input.enemyPantry }
+end
+
+-- Roles for `count` bots: about `defenderShare` defend (at least one once there
+-- are two or more bots), the rest raid.
+function BotBrain.assignRoles(count: number, defenderShare: number): { Role }
+	local defenders = if count >= 2 then math.max(1, math.floor(count * defenderShare)) else 0
+	local roles: { Role } = {}
+	for i = 1, count do
+		table.insert(roles, if i <= defenders then "defender" else "raider")
+	end
+	return roles
+end
+
+return BotBrain
