@@ -123,15 +123,15 @@ Config.Map = {
 	neutralHalfWidth = 1, -- center strip where nobody can tag
 	negativeSideTeam = "Red",
 	positiveSideTeam = "Blue",
-	fieldLength = 200,
-	fieldWidth = 90,
-	wallHeight = 8,
-	pantryX = 88, -- distance from center line
-	dropoffX = 70,
-	dropoffZ = 22,
-	spawnX = 92,
-	spawnZ = -24,
-	burgerSpawns = { { x = 0, z = 25 }, { x = 0, z = -25 } },
+	fieldLength = 400,
+	fieldWidth = 180,
+	wallHeight = 20,
+	pantryX = 180, -- distance from center line
+	dropoffX = 150,
+	dropoffZ = 0,
+	spawnX = 190,
+	spawnZ = 0,
+	burgerSpawns = { { x = 0, z = 30 }, { x = 0, z = -30 } },
 }
 
 Config.FoodPickupRadius = 4 -- studs from a food piece to grab/touch it
