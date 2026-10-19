@@ -80,4 +80,17 @@ Stage 8: double-check panel.
 
 ## Double-check
 
+## Self-review (step 4)
+
+- Caught before running: food detail parts used `WeldConstraint`, whose offset is captured on activation → bits would have stayed at the world origin when the food was positioned before parenting. Switched to `Weld` with explicit `C0` (row: none, code review finding).
+- Lead verified both workers' claims instead of trusting them (rows 15–17, 19–21).
+
 ## Open items
+
+- **Neon Horizon silent for Jim** (row 26): log shows it started, no load-failure warning. Cause unconfirmed; moderation suspected (Kishi was removed). Jim to check Creator Hub → Audio status.
+- **Human food pickup** verified only via bots (same `Reach` rule for every actor, row 36); no human grab was driven in Studio.
+- **Bots score rarely**: 1 delivery in ~5 min in run 3; in run 4 carriers were tagged on the way home. Defence works; balance (e.g. carrier speed 0.75) not tuned. Unconfirmed whether this is fun with humans.
+- **Not seen in Studio**: dash pads, jump pads (launch height ≈ 95²/(2·196.2) ≈ 23 studs, computed not observed), Kelly/Sol/Pim/Dog/Pizza/Cook effects, score confetti, guide beam, pizza slice and bank pediment wedge orientation (worker flagged).
+- **Camera previews**: command-bar camera moves didn't rotate the edit camera; restaurants' fronts (Pizza Palace, Taco Town) seen only from inside in play, not as a front shot.
+- `smoke_main.dds` exists in this Studio install (row 16); `rbxasset://` paths can change in future Studio versions.
+- Part count 2392 (budget 4000); performance on phones untested.
