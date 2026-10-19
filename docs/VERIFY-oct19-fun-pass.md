@@ -53,6 +53,9 @@ Stage 8: double-check panel.
 | 16 | 5 | Mac: `ls /Applications/RobloxStudio.app/Contents/Resources/content/textures/particles/` (worker flagged `rbxasset://textures/particles/smoke_main.dds` as unverifiable) | PASS | `smoke_main.dds` listed |
 | 17 | 5 | `git diff Effects.luau` vs `Powers/GreaseSpill.luau`: trap fx now enemies-only; is gameplay unchanged? | PASS | `spec.onEnter(Actors.view(a))` still called for every actor; GreaseSpill slows only `target.team ~= myTeam`, so fx now matches the effect |
 | 18 | 1 | Jim: Roblox removed audio 107858682693210; dropped from playlist; `lune run tests/run` (test asserts it's absent, playlist = 2) | PASS | `Rules/AudioRules.spec 9 passed, 0 failed` · `TOTAL: 119 passed, 0 failed` |
+| 19 | 3 | lead re-run after worker A: `lune run tools/arena-check/run` | PASS | `arena: 2392 parts, 8 dash pads, 4 jump pads, 45 signs` · `ARENA CHECK: 50 passed, 0 failed` · `arena exit=0` |
+| 20 | 2,3 | same run: grab zone now clear (was row 3 FAIL `Red grab zone blocked by: RedPantry, RedCounter`) | PASS | no `grab zone` FAIL lines; pantry size/position contract lines pass |
+| 21 | 6 | `luau-lsp analyze ... src` + `lune run tests/run` + `rojo build` | PASS | `lsp exit=0` · `TOTAL: 119 passed, 0 failed` · `Built project to DayOfGlory-music.rbxl` |
 
 ## Double-check
 
