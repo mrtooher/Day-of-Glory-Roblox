@@ -161,7 +161,7 @@ Config.Bots = {
 	repathSeconds = 0.75,
 	defenderShare = 0.25, -- fraction of a team's bots that guard home
 	powerUseChance = 0.35, -- per think tick when a target is in range
-	debugLogSeconds = 5, -- print "[Bot]" status lines this often (0 = off); Studio logs
+	debugLogSeconds = 0, -- >0: print "[Bot]" status lines this often (debugging bots in Studio)
 }
 
 -- Audio ---------------------------------------------------------------------

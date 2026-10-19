@@ -174,7 +174,8 @@ local function think(bot: Actor, path: Path)
 	if restart then
 		w.pos, w.since = pos, now
 	end
-	if isStuck and decision.action ~= "guard" then
+	local arrived = (Vector3.new(target.X, pos.Y, target.Z) - pos).Magnitude < 6
+	if isStuck and not arrived and decision.action ~= "guard" then
 		local angle = math.random() * math.pi * 2
 		bot.humanoid.Jump = true
 		bot.humanoid:MoveTo(pos + Vector3.new(math.cos(angle) * 8, 0, math.sin(angle) * 8))

@@ -74,6 +74,9 @@ Stage 8: double-check panel.
 | 37 | 7 | Studio run 3 HUD | PASS | `RED 1/10` at 7:03: first delivery ever observed (grab → carry → score loop) |
 | 38 | 7 | Studio run 3 server log: carrier stationary 30+ s | FAIL | `Bot 2 ... return pos=(-55,4,64) ... path=Success carrying=true` ×6, `Bot 1 ... pos=(135,4,-66)` ×6; Lune box query: on `Plinth Bank x -85.5..-54.5 y 0..0.8` / `Plinth Arcade` corners |
 | 39 | 4 | `lune run tests/run` with `BotBrain.stuck` tests + `luau-lsp` | PASS | `Rules/BotBrain.spec 15 passed, 0 failed` · `TOTAL: 125 passed, 0 failed` · `lsp exit=0` |
+| 40 | 7 | Studio run 4 (stuck fix) server log | PASS | `grep -c FLog::CreatorError` → `0`; `[Bot] Bot 7 unstick at (55,4,-34)` then carriers progress (`Bot 1 ... return pos=(176,...)` → `(-18,3,-50)` carrying=true) |
+| 41 | 7 | same: unstick firing on defenders standing at their guard/chase point | FAIL | `Bot 4 unstick at (-116,3,0)` ×4 (at guard point -117,0) → skip unstick within 6 studs of target |
+| 42 | 6 | after fix: `luau-lsp` + `lune run tests/run` + arena check + `rojo build` | PASS | `lsp exit=0` · `TOTAL: 125 passed, 0 failed` · `ARENA CHECK: 52 passed, 0 failed` · `Built project to DayOfGlory-test.rbxl` |
 
 ## Double-check
 
