@@ -40,6 +40,8 @@ Stage 6: double-check panel.
 | 8 | 3 | `luau-lsp analyze ... src` after GameFeel (beacon loop, smaller markers/banners/hint, roof FOOD tags) + Hud (smaller feed, duplicate carry text removed) | PASS | `lsp exit=0` · `TOTAL: 134 passed, 0 failed` |
 | 9 | 4 | docs/QWEN-TASKS.md names vs code: `grep` awardPoint / startMatch / endMatch / TagService.tag / Main `order` / PhaseEndsAt / MatchDurationSeconds / PostMatchSeconds / FireServer+pending / Remotes name list | PASS | all found (`MatchService.luau:83,96,114`, `TagService.luau:34`, `Main.server.luau:12`, `Remotes.luau:16` …) |
 | 10 | 4 | same: "main colour from Looks.luau", "create it the same way" | FAIL | Looks has no single colour field (`shirt = "#3a2a1a"` hex strings); prompts reworded to `Looks[id].shirt` + `Color3.fromHex`, and the exact Remotes list |
+| 11 | 2 | lead re-run after worker: `lune run tools/arena-check/run` | PASS | `arena: 2568 parts, 8 dash pads, 4 jump pads, 61 signs` · `ARENA CHECK: 92 passed, 0 failed` (was 60/12) |
+| 12 | 2,6 | `luau-lsp analyze ... src` + `lune run tests/run` + `rojo build`; old `BurgerJointStep` removed (`grep` → none) | PASS | `lsp exit=0` · `TOTAL: 134 passed, 0 failed` · `Built project to DayOfGlory-test.rbxl` |
 
 ## Double-check
 

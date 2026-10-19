@@ -455,8 +455,24 @@ local function buildShop(root: Instance, b: Spec)
 			solid(f, "Parapet", V(w, 1.2, 0.8), bcf * CF(0, py, -d / 2 + 0.4), b.trim, trimMat)
 		end
 		solid(f, "Parapet", V(w, 1.2, 0.8), bcf * CF(0, py, d / 2 - 0.4), b.trim, trimMat)
+		-- Side parapets; sideGap = { sx, z1, z2 } (local) opens one where rooftop stairs arrive.
+		local sideGap: { number }? = b.sideGap
 		for _, sx in { -1, 1 } do
-			solid(f, "Parapet", V(0.8, 1.2, d - 1.6), bcf * CF(sx * (w / 2 - 0.4), py, 0), b.trim, trimMat)
+			local zLo, zHi = -(d / 2 - 0.8), d / 2 - 0.8
+			local pieces = { { zLo, zHi } }
+			if sideGap and sideGap[1] == sx then
+				pieces = { { zLo, sideGap[2] }, { sideGap[3], zHi } }
+				-- Glowing gate posts either side of the opening.
+				for _, gz in { sideGap[2], sideGap[3] } do
+					local gp = neon(f, "ParapetGatePost", V(1, 1.8, 0.6), bcf * CF(sx * (w / 2 - 0.4), h + 0.9, gz), GOLD)
+					light(gp, GOLD, 8, 0.6)
+				end
+			end
+			for _, pc in pieces do
+				if pc[2] - pc[1] > 0.05 then
+					solid(f, "Parapet", V(0.8, 1.2, pc[2] - pc[1]), bcf * CF(sx * (w / 2 - 0.4), py, (pc[1] + pc[2]) / 2), b.trim, trimMat)
+				end
+			end
 		end
 	end
 
@@ -516,13 +532,16 @@ local function sushiExtras(f: Instance, bcf: CFrame, b: Spec)
 	local function L(x: number, y: number, z: number): CFrame
 		return bcf * CF(x, y, z)
 	end
-	-- Pagoda-style eave with red trim.
-	solid(f, "Eave", V(34, 0.6, 34), L(0, h + 0.3, 0), C(45, 50, 62), M.Slate)
-	deco(f, "EaveTrim", V(34.3, 0.3, 34.3), L(0, h + 0.05, 0), C(200, 40, 40))
-	solid(f, "Ridge", V(22, 1.4, 22), L(0, h + 1.3, 0), C(55, 60, 72), M.Slate)
-	local top = h + 2
+	-- Pagoda-style eave with red trim, flush with the roof and non-colliding
+	-- (the rooftop-food stairs climb the west wall right under its overhang).
+	deco(f, "Eave", V(34, 0.6, 34), L(0, h - 0.32, 0), C(45, 50, 62), M.Slate)
+	deco(f, "EaveTrim", V(34.3, 0.3, 34.3), L(0, h - 0.65, 0), C(200, 40, 40))
+	-- Raised ridge on the east half only: the west half is the rooftop food stand.
+	solid(f, "Ridge", V(14, 1.4, 24), L(7.5, h + 0.7, 0), C(55, 60, 72), M.Slate)
+	deco(f, "RidgeTrim", V(14.3, 0.3, 24.3), L(7.5, h + 1.25, 0), C(200, 40, 40))
+	local top = h + 1.4
 	-- Giant maki roll: nori outside, rice ring, salmon/cucumber/avocado centre.
-	local roll = L(-5, top + 4.5, 2) * ry(90)
+	local roll = L(5, top + 4.5, -5) * ry(90)
 	cyl(f, "MakiNori", V(6, 9, 9), roll, C(25, 45, 35), M.SmoothPlastic, true)
 	cyl(f, "MakiRice", V(0.3, 8, 8), roll * CF(3.05, 0, 0), C(250, 250, 245))
 	cyl(f, "MakiRiceBack", V(0.3, 8, 8), roll * CF(-3.05, 0, 0), C(250, 250, 245))
@@ -530,14 +549,14 @@ local function sushiExtras(f: Instance, bcf: CFrame, b: Spec)
 	cyl(f, "MakiCucumber", V(0.3, 1.5, 1.5), roll * CF(3.3, 1.6, 1.5), C(90, 190, 80))
 	cyl(f, "MakiAvocado", V(0.3, 1.5, 1.5), roll * CF(3.3, -1.5, -1.6), C(190, 215, 100))
 	-- Giant salmon nigiri.
-	solid(f, "NigiriRice", V(7, 2.4, 4), L(6.5, top + 1.2, 2), C(250, 250, 245))
-	solid(f, "NigiriSalmon", V(7.6, 1, 4.6), L(6.5, top + 2.9, 2), C(255, 130, 90))
+	solid(f, "NigiriRice", V(7, 2.4, 4), L(9.5, top + 1.2, 6), C(250, 250, 245))
+	solid(f, "NigiriSalmon", V(7.6, 1, 4.6), L(9.5, top + 2.9, 6), C(255, 130, 90))
 	for k = -1, 1 do
-		deco(f, "NigiriStripe", V(0.45, 1.06, 4.66), L(6.5 + k * 2, top + 2.9, 2), C(255, 220, 200))
+		deco(f, "NigiriStripe", V(0.45, 1.06, 4.66), L(9.5 + k * 2, top + 2.9, 6), C(255, 220, 200))
 	end
 	-- Chopsticks leaning across the roll.
 	for k = 0, 1 do
-		deco(f, "Chopstick", V(0.5, 0.5, 14), L(-6 + k * 1.4, top + 7, 4) * CFrame.Angles(math.rad(-30), math.rad(8), 0), C(220, 180, 120), M.Wood)
+		deco(f, "Chopstick", V(0.5, 0.5, 14), L(4 + k * 1.4, top + 7, -3) * CFrame.Angles(math.rad(-30), math.rad(8), 0), C(220, 180, 120), M.Wood)
 	end
 	-- Red paper lanterns.
 	for _, spot in { { -14, 10.4, -17.2 }, { 14, 10.4, -17.2 }, { -4.2, 7.4, -15.9 }, { 4.2, 7.4, -15.9 } } do
@@ -676,8 +695,9 @@ local function burgerExtras(f: Instance, bcf: CFrame, b: Spec)
 	local function L(x: number, y: number, z: number): CFrame
 		return bcf * CF(x, y, z)
 	end
-	-- Giant burger on the roof (the buns are solid, so you can climb it).
-	local bx, bz = -4, 4
+	-- Giant burger on the roof (the buns are solid, so you can climb it); kept
+	-- on the east half, clear of the rooftop food stand by the west stairs.
+	local bx, bz = -6, 2
 	local bun = C(225, 160, 80)
 	vcyl(f, "BurgerBunBottom", 2.2, 11, L(bx, h + 1.1, bz), bun, M.SmoothPlastic, true)
 	vcyl(f, "BurgerPatty", 2, 11.6, L(bx, h + 3.2, bz), C(110, 60, 35), M.SmoothPlastic, true)
@@ -767,15 +787,16 @@ local function arcadeExtras(f: Instance, bcf: CFrame, b: Spec)
 	local function L(x: number, y: number, z: number): CFrame
 		return bcf * CF(x, y, z)
 	end
-	-- Giant joystick.
-	solid(f, "JoystickBase", V(9, 2, 7), L(-5, h + 1, 2), BLACK)
-	deco(f, "JoystickTrim", V(9.1, 0.4, 7.1), L(-5, h + 1.6, 2), C(255, 60, 200), M.Neon)
-	vcyl(f, "JoystickStick", 6, 1.2, L(-6.5, h + 5, 2), C(180, 180, 190), M.Metal, true)
-	ball(f, "JoystickBall", 3.6, L(-6.5, h + 8.6, 2), C(235, 35, 50), M.SmoothPlastic, true)
-	vcyl(f, "ArcadeButton", 0.6, 1.6, L(-2.5, h + 2.2, 0.5), C(255, 220, 40))
-	vcyl(f, "ArcadeButton", 0.6, 1.6, L(-2.5, h + 2.2, 3.5), C(40, 160, 255))
+	-- Giant joystick (street half of the roof; the alley-side east corner holds
+	-- the rooftop food stand).
+	solid(f, "JoystickBase", V(9, 2, 7), L(1, h + 1, -6), BLACK)
+	deco(f, "JoystickTrim", V(9.1, 0.4, 7.1), L(1, h + 1.6, -6), C(255, 60, 200), M.Neon)
+	vcyl(f, "JoystickStick", 6, 1.2, L(-0.5, h + 5, -6), C(180, 180, 190), M.Metal, true)
+	ball(f, "JoystickBall", 3.6, L(-0.5, h + 8.6, -6), C(235, 35, 50), M.SmoothPlastic, true)
+	vcyl(f, "ArcadeButton", 0.6, 1.6, L(3.5, h + 2.2, -7.5), C(255, 220, 40))
+	vcyl(f, "ArcadeButton", 0.6, 1.6, L(3.5, h + 2.2, -4.5), C(40, 160, 255))
 	-- Giant coin.
-	local coin = cyl(f, "ArcadeCoin", V(1, 7, 7), L(7, h + 3.7, -2) * ry(90), GOLD, M.Metal, true)
+	local coin = cyl(f, "ArcadeCoin", V(1, 7, 7), L(10, h + 3.7, -4) * ry(90), GOLD, M.Metal, true)
 	addLabel(coin, Enum.NormalId.Right, "★", C(255, 250, 200), C(160, 100, 0))
 	addLabel(coin, Enum.NormalId.Left, "★", C(255, 250, 200), C(160, 100, 0))
 	-- Pixel-art heart (one neon part per run of pixels).
@@ -822,7 +843,7 @@ local BUILDINGS: { Spec } = {
 		name = "Apartments", x = 120, z = 50, w = 30, d = 30, h = 24,
 		wall = C(175, 85, 65), wallMat = M.Brick, trim = C(245, 245, 240), door = C(40, 70, 130),
 		sign = "SUNNY APTS", signW = 12, signBg = C(255, 210, 60), signFg = C(40, 70, 130), signStroke = WHITE,
-		frontRows = { 13, 17, 21 }, sideRows = { 4.5, 10.5, 14.5, 18.5 }, extras = apartmentExtras,
+		frontRows = { 13, 17, 21 }, sideRows = { 4.5, 10.5, 14.5, 18.5 }, sideGap = { 1, -14.2, -8.8 }, extras = apartmentExtras,
 	},
 	{
 		name = "BurgerJoint", x = -120, z = -50, w = 30, d = 30, h = 10,
@@ -830,7 +851,7 @@ local BUILDINGS: { Spec } = {
 		awning = { C(220, 40, 40), WHITE },
 		sign = "BURGER JOINT", signY = 13, signU = -4, signW = 18, signBg = C(220, 40, 40), signFg = C(255, 230, 80),
 		signStroke = C(110, 20, 10), signBorder = C(255, 220, 60), font = Enum.Font.FredokaOne,
-		parapetGap = { 7, 13 }, sideRows = { 4.5 }, extras = burgerExtras,
+		sideGap = { 1, 0.2, 5.2 }, sideRows = { 4.5 }, extras = burgerExtras,
 	},
 	{
 		name = "Police", x = -70, z = -50, w = 30, d = 30, h = 15,
@@ -849,7 +870,7 @@ local BUILDINGS: { Spec } = {
 		name = "Arcade", x = 120, z = -50, w = 30, d = 30, h = 16,
 		wall = C(70, 35, 110), wallMat = M.SmoothPlastic, trim = C(255, 60, 200), trimMat = M.Neon, door = C(30, 20, 50),
 		sign = "ARCADE", signBg = C(20, 10, 40), signFg = C(90, 255, 255), signStroke = C(10, 0, 40), signBorder = C(0, 230, 255),
-		font = Enum.Font.FredokaOne, frontRows = { 13.7 }, sideRows = { 4.5, 10.5 }, extras = arcadeExtras,
+		font = Enum.Font.FredokaOne, frontRows = { 13.7 }, sideRows = { 4.5, 10.5 }, sideGap = { -1, 8, 13 }, extras = arcadeExtras,
 	},
 }
 
@@ -1230,9 +1251,10 @@ local function buildStreets(root: Instance, m: { [string]: any })
 			tree(f, V(x, 0, zs * 86.5), 1.1)
 		end
 		for _, xs in { -1, 1 } do
-			tree(f, V(xs * 142, 0.3, zs * 40))
+			-- (kept clear of the rooftop-food stairs along the shops' plaza walls, |x| 135..145)
+			tree(f, V(xs * 152, 0.3, zs * 38))
 			tree(f, V(xs * 154, 0.3, zs * 62))
-			bench(f, CF(xs * 148, 0.3, zs * 52) * ry(if xs > 0 then -90 else 90))
+			bench(f, CF(xs * 151, 0.3, zs * 52) * ry(if xs > 0 then -90 else 90))
 			planter(f, CF(xs * 154, 0.3, zs * 44) * ry(90), { C(255, 90, 140), C(255, 220, 60), C(150, 90, 230) })
 		end
 	end
@@ -1423,6 +1445,148 @@ local function setupLighting()
 	end
 end
 
+-- Rooftop food ------------------------------------------------------------------
+-- Each team keeps 2 foods on the roofs of the two shops nearest its base:
+-- <Team>RoofFood<k> is the display stand (food rests on top), reached by stairs
+-- <Team>RoofStair<k>Step1..N. Every step is a solid block from the ground (no
+-- gaps for bots), rises <= 1.6 and has open air above; the last step is a
+-- landing level with the roof next to an opening in the parapet.
+
+local function roofFoodStand(parent: Instance, name: string, x: number, z: number, roofTop: number, teamColor: Color3, poleDir: Vector3)
+	local f = newFolder(parent, name .. "Stand")
+	local stand = solid(f, name, V(3, 1.2, 3), CF(x, roofTop + 0.6, z), C(250, 245, 235), M.Marble)
+	stand.Position = V(x, roofTop + 0.6, z)
+	-- Glowing team rim round the top edge and a foot strip on the roof.
+	local rim = neon(f, "StandRim", V(3.4, 0.3, 3.4), CF(x, roofTop + 1.0, z), teamColor)
+	light(rim, teamColor, 14, 1.2)
+	neon(f, "StandFoot", V(3.6, 0.15, 3.6), CF(x, roofTop + 0.08, z), teamColor)
+	-- Market umbrella: pole 4.6 studs out, canopy above the food's headroom.
+	local px, pz = x + poleDir.X * 4.6, z + poleDir.Z * 4.6
+	deco(f, "StandPole", V(0.3, 9.4, 0.3), CF(px, roofTop + 4.7, pz), WHITE, M.Metal)
+	vcyl(f, "StandCanopy", 0.3, 10.5, CF(x, roofTop + 9.4, z), teamColor)
+	vcyl(f, "StandCanopyMid", 0.35, 7, CF(x, roofTop + 9.6, z), WHITE)
+	vcyl(f, "StandCanopyTop", 0.4, 3, CF(x, roofTop + 9.8, z), teamColor)
+	ball(f, "StandFinial", 0.8, CF(x, roofTop + 10.2, z), GOLD, M.Metal)
+	-- Small sign hanging off the pole, facing along it (readable from both sides).
+	local face = CF(px, roofTop + 6.6, pz) * ry(math.deg(math.atan2(poleDir.X, poleDir.Z)))
+	sign(f, "StandSign", V(3.6, 1, 0.2), face, WHITE, "ROOFTOP FOOD", teamColor, BLACK, nil, Enum.Font.FredokaOne, true)
+	return stand
+end
+
+-- One stair block from the ground up (solid: no gaps underneath), top at `top`.
+-- `lead` is the z of the edge you step up at; it gets a gold nosing strip.
+local function stairBlock(parent: Instance, name: string, x1: number, x2: number, z1: number, z2: number, top: number, color: Color3, lead: number)
+	local lo, hi = math.min(z1, z2), math.max(z1, z2)
+	local cx, cz = (x1 + x2) / 2, (lo + hi) / 2
+	solid(parent, name, V(x2 - x1, top, hi - lo), CF(cx, top / 2, cz), color, M.Concrete)
+	local inward = if math.abs(lead - lo) < 0.01 then 0.25 else -0.25
+	flat(parent, "StairNosing", V(x2 - x1, 0.06, 0.5), CF(cx, top + 0.03, lead + inward), GOLD)
+end
+
+-- Handrail (non-colliding) in the YZ plane at x, from (z1, y1) to (z2, y2).
+local function railZ(parent: Instance, x: number, z1: number, y1: number, z2: number, y2: number)
+	local dz, dy = z2 - z1, y2 - y1
+	local len = math.sqrt(dz * dz + dy * dy)
+	deco(parent, "StairRail", V(0.3, 0.3, len), CF(x, (y1 + y2) / 2, (z1 + z2) / 2) * CFrame.Angles(math.atan2(-dy, dz), 0, 0), C(60, 60, 65), M.Metal)
+	for _, p in { { z1, y1 }, { z2, y2 } } do
+		deco(parent, "StairRailPost", V(0.25, 3, 0.25), CF(x, p[2] - 1.5, p[1]), C(60, 60, 65), M.Metal)
+	end
+end
+
+-- Level handrail along X at z, height y.
+local function railX(parent: Instance, z: number, x1: number, x2: number, y: number)
+	deco(parent, "StairRail", V(math.abs(x2 - x1), 0.3, 0.3), CF((x1 + x2) / 2, y, z), C(60, 60, 65), M.Metal)
+end
+
+-- "ROOFTOP FOOD" sign on a post at the foot of the stairs; faceZ = side the
+-- climbers come from (-1: they approach from -Z).
+local function stairSign(parent: Instance, x: number, z: number, faceZ: number, teamColor: Color3)
+	deco(parent, "StairSignPost", V(0.3, 5.4, 0.3), CF(x, 2.7, z), C(60, 60, 65), M.Metal)
+	local cf = CF(x, 4.9, z) * (if faceZ < 0 then CF() else ry(180))
+	sign(parent, "StairSign", V(4.4, 1.5, 0.2), cf, teamColor, "ROOFTOP FOOD ↑", WHITE, BLACK, nil, Enum.Font.FredokaOne, true)
+end
+
+-- Lamp on the top landing (rooftop light).
+local function landingLamp(parent: Instance, x: number, z: number, y: number, teamColor: Color3)
+	deco(parent, "LandingLampPost", V(0.3, 4.6, 0.3), CF(x, y + 2.3, z), C(60, 60, 65), M.Metal)
+	local globe = ball(parent, "LandingLamp", 1, CF(x, y + 4.9, z), teamColor, M.Neon)
+	light(globe, teamColor, 14, 1)
+end
+
+-- Straight flight along Z beside a wall, x1..x2 wide, starting at zStart and
+-- climbing toward dir (±1): n-1 steps of `tread`, then a 5-stud landing level
+-- with the roof. `outer` = which x edge is away from the wall (-1: x1, 1: x2).
+local function straightRoofStair(parent: Instance, prefix: string, x1: number, x2: number, outer: number, zStart: number, dir: number, roofTop: number, n: number, tread: number, colors: { Color3 }, teamColor: Color3)
+	local rise = roofTop / n
+	for i = 1, n - 1 do
+		local za = zStart + dir * (i - 1) * tread
+		stairBlock(parent, prefix .. i, x1, x2, za, za + dir * tread, i * rise, colors[i % 2 + 1], za)
+	end
+	local zl = zStart + dir * (n - 1) * tread
+	local zEnd = zl + dir * 5
+	stairBlock(parent, prefix .. n, x1, x2, zl, zEnd, roofTop, colors[n % 2 + 1], zl)
+	-- Handrails on the open side and across the far end of the landing.
+	local xo = if outer < 0 then x1 + 0.2 else x2 - 0.2
+	railZ(parent, xo, zStart + dir * tread / 2, rise + 3, zl - dir * tread / 2, (n - 1) * rise + 3)
+	railZ(parent, xo, zl, roofTop + 3, zEnd - dir * 0.2, roofTop + 3)
+	railX(parent, zEnd - dir * 0.2, x1, x2, roofTop + 3)
+	landingLamp(parent, xo, zEnd - dir * 0.2, roofTop, teamColor)
+	stairSign(parent, xo + outer * 2.8, zStart - dir * 0.4, -dir, teamColor)
+end
+
+local function buildRooftopFood(root: Instance)
+	local f = newFolder(root, "RooftopFood")
+	local red, blue = C(220, 40, 40), C(40, 110, 230)
+	local redSteps = { C(195, 70, 55), C(225, 110, 85) }
+	local blueSteps = { C(55, 105, 195), C(90, 140, 225) }
+
+	-- Red 1: Sushi Bar (x -135..-105, z 35..65, roof 13). Stairs up the west
+	-- wall from the corner plaza, 9 rises of 1.44, landing at z 54.6..59.6.
+	local s1 = newFolder(f, "RedSushiStairs")
+	straightRoofStair(s1, "RedRoofStair1Step", -140, -135, -1, 37, 1, 13, 9, 2.2, redSteps, red)
+	roofFoodStand(f, "RedRoofFood1", -127, 57, 13, red, V(1, 0, 0))
+
+	-- Red 2: Burger Joint (x -135..-105, z -65..-35, roof 10). Stairs up the
+	-- west wall, 7 rises of 1.43, landing at z -50.4..-55.4 (parapet gap).
+	local s2 = newFolder(f, "RedBurgerStairs")
+	straightRoofStair(s2, "RedRoofStair2Step", -140, -135, -1, -37, -1, 10, 7, 2.2, redSteps, red)
+	roofFoodStand(f, "RedRoofFood2", -127, -53, 10, red, V(1, 0, 0))
+
+	-- Blue 1: Sunny Apts (x 105..135, z 35..65, roof 24). U-shaped switchback
+	-- on the plaza (east) side, 16 rises of 1.5: flight 1 north in lane
+	-- x 140..145, landing across both lanes, flight 2 south in lane x 135..140,
+	-- top landing at z 36..41.2 against the wall (parapet gap).
+	local s3 = newFolder(f, "BlueApartmentStairs")
+	local p3 = "BlueRoofStair1Step"
+	local rise3 = 1.5
+	for i = 1, 7 do
+		local za = 37 + (i - 1) * 3
+		stairBlock(s3, p3 .. i, 140, 145, za, za + 3, i * rise3, blueSteps[i % 2 + 1], za)
+	end
+	stairBlock(s3, p3 .. 8, 135, 145, 58, 63, 8 * rise3, blueSteps[1], 58)
+	for i = 9, 15 do
+		local za = 58 - (i - 9) * 2.4
+		stairBlock(s3, p3 .. i, 135, 140, za, za - 2.4, i * rise3, blueSteps[i % 2 + 1], za)
+	end
+	stairBlock(s3, p3 .. 16, 135, 140, 41.2, 36, 24, blueSteps[1], 41.2)
+	railZ(s3, 144.8, 38.5, rise3 + 3, 56.5, 7 * rise3 + 3)
+	railZ(s3, 144.8, 58, 15, 62.8, 15)
+	railX(s3, 62.8, 135, 145, 15)
+	railZ(s3, 140, 56.8, 9 * rise3 + 3, 42.4, 15 * rise3 + 3)
+	railZ(s3, 140, 41.2, 27, 36.2, 27)
+	railX(s3, 36.2, 135, 140, 27)
+	landingLamp(s3, 144.8, 62.8, 12, blue)
+	landingLamp(s3, 139.8, 36.2, 24, blue)
+	stairSign(s3, 147.6, 36.6, -1, blue)
+	roofFoodStand(f, "BlueRoofFood1", 127, 39, 24, blue, V(-1, 0, 0))
+
+	-- Blue 2: Arcade (x 105..135, z -65..-35, roof 16). Stairs up the east
+	-- wall from the plaza, 11 rises of 1.45, landing at z -58..-63 (parapet gap).
+	local s4 = newFolder(f, "BlueArcadeStairs")
+	straightRoofStair(s4, "BlueRoofStair2Step", 135, 140, 1, -36, -1, 16, 11, 2.2, blueSteps, blue)
+	roofFoodStand(f, "BlueRoofFood2", 127, -60, 16, blue, V(-1, 0, 0))
+end
+
 -- Arena ---------------------------------------------------------------------------
 
 function MapBuildings.buildArena(folder: Instance, m: { [string]: any })
@@ -1460,16 +1624,9 @@ function MapBuildings.buildArena(folder: Instance, m: { [string]: any })
 	for _, b in BUILDINGS do
 		buildShop(shops, b)
 	end
-	-- Stairs up to the Burger Joint roof (roof top y = 10, front face z = -35),
-	-- at the west end of the storefront where the parapet has a gap.
-	local burger = shops:FindFirstChild("BurgerJoint") :: Instance
-	for i = 1, 5 do
-		local top = i * 2
-		solid(burger, "BurgerJointStep" .. i, V(6, top, 2), CF(-130, top / 2, -23 - i * 2), if i % 2 == 0 then C(255, 205, 60) else C(220, 40, 40), M.WoodPlanks)
-	end
-	for _, x in { -133.2, -126.8 } do
-		deco(burger, "StairRail", V(0.3, 0.3, 13.8), CF(x, 8.25, -29) * CFrame.Angles(math.atan(9.5 / 10), 0, 0), C(60, 60, 65), M.Metal)
-	end
+	-- Rooftop food stands and their stairs (Sushi Bar, Burger Joint, Sunny
+	-- Apts, Arcade).
+	buildRooftopFood(folder)
 
 	-- 5. Burger spawns (middle pickups) with a glowing ring.
 	for i, b in m.burgerSpawns do
