@@ -86,7 +86,7 @@ Config.Powers = {
 		passiveJumpMultiplier = 1.7,
 	},
 	Whistle = {
-		displayName = "WHISTLE",
+		displayName = "STUN GUN",
 		cooldown = 5,
 		range = 30,
 		freezeSeconds = 2,
@@ -98,7 +98,7 @@ Config.Powers = {
 		speedMultiplier = 1.5,
 	},
 	PizzaToss = {
-		displayName = "PIZZA TOSS",
+		displayName = "PIZZA KNIFE",
 		cooldown = 5,
 		speed = 45,
 		range = 60,
