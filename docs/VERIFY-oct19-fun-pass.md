@@ -56,6 +56,14 @@ Stage 8: double-check panel.
 | 19 | 3 | lead re-run after worker A: `lune run tools/arena-check/run` | PASS | `arena: 2392 parts, 8 dash pads, 4 jump pads, 45 signs` · `ARENA CHECK: 50 passed, 0 failed` · `arena exit=0` |
 | 20 | 2,3 | same run: grab zone now clear (was row 3 FAIL `Red grab zone blocked by: RedPantry, RedCounter`) | PASS | no `grab zone` FAIL lines; pantry size/position contract lines pass |
 | 21 | 6 | `luau-lsp analyze ... src` + `lune run tests/run` + `rojo build` | PASS | `lsp exit=0` · `TOTAL: 119 passed, 0 failed` · `Built project to DayOfGlory-music.rbxl` |
+| 22 | 7 | Studio Server & Clients (2 clients) via computer use; client logs grep `[Audio]` | PASS | `[Audio] Now playing Feast for your life (140350912499061)` 16:22:07 → `[Audio] Now playing Neon Horizon (89048811438062)` 16:23:10 (playlist advances) |
+| 23 | 7 | same session: `grep -c FLog::CreatorError` on server + 2 client logs | PASS | `0` / `0` / `0` (only Roblox-side warnings: StyleRule CornerRadius, UIBlox FoundationProvider, Wrap-deformer) |
+| 24 | 7 | same session: screenshot of Taco Town interior | FAIL | white/light surfaces blown out to glowing white (Brightness 2.5, ColorShift_Top 255,235,210, Bloom threshold 0.9) → lighting toned down |
+| 25 | 7 | same session: HUD score after ~5 min of bots playing | FAIL | `RED 0/10  BLUE 0/10` at 6:06 left; feed only shows "Bot N tagged Bot M" (hypothesis, unconfirmed: head-on collisions mid-field) → per-bot lanes |
+| 26 | 7 | Jim (live): Neon Horizon silent | UNVERIFIABLE | log shows it started; no `[Audio] Could not load` line; asset exists (economy API `Name":"Neon Horizon"`); cause unconfirmed (moderation suspected) |
+| 27 | 4 | `lune run tests/run` with new `BotBrain.laneWaypoint` tests (incl. no ping-pong at the lane point) | PASS | `Rules/BotBrain.spec 12 passed, 0 failed` · `TOTAL: 122 passed, 0 failed` |
+| 28 | 3 | arena harness + new alley-lane zones | FAIL | `north alley lane blocked by: Dumpster, Dumpster, BackStep...` |
+| 29 | 3 | same after moving dumpsters to z ±77.5 and lane floor y 0.8 (0.6 door step walkable) | PASS | `ARENA CHECK: 52 passed, 0 failed` |
 
 ## Double-check
 

@@ -1218,7 +1218,8 @@ local function buildStreets(root: Instance, m: { [string]: any })
 		trashCan(f, p)
 	end
 	-- Dumpsters behind the shops.
-	for _, p in { V(-128, 0, 68.5), V(-62, 0, 68.5), V(62, 0, -68.5), V(128, 0, -68.5) } do
+	-- Against the outer side of the alley: z ±66..74 is a bot lane (BotService).
+	for _, p in { V(-128, 0, 77.5), V(-62, 0, 77.5), V(62, 0, -77.5), V(128, 0, -77.5) } do
 		solid(f, "Dumpster", V(5, 3, 2.6), CF(p + V(0, 1.5, 0)), C(40, 110, 70), M.Metal)
 		deco(f, "DumpsterLid", V(5.2, 0.3, 2.8), CF(p + V(0, 3.15, 0)), C(30, 80, 50), M.Metal)
 	end
@@ -1374,10 +1375,14 @@ end
 
 local function setupLighting()
 	Lighting.ClockTime = 14.5
-	Lighting.Brightness = 2.5
-	Lighting.Ambient = C(110, 100, 95)
-	Lighting.OutdoorAmbient = C(170, 150, 130)
-	Lighting.ColorShift_Top = C(255, 235, 210)
+	-- Studio test 2026-10-19: the first values (Brightness 2.5, Ambient 110,
+	-- OutdoorAmbient 170, ColorShift_Top 255,235,210, Bloom threshold 0.9)
+	-- washed every white/light surface out to glowing white. Toned down.
+	Lighting.Brightness = 2
+	Lighting.Ambient = C(70, 68, 72)
+	Lighting.OutdoorAmbient = C(128, 124, 132)
+	Lighting.ColorShift_Top = C(40, 30, 15)
+	Lighting.ExposureCompensation = -0.15
 	Lighting.EnvironmentDiffuseScale = 0.6
 	Lighting.EnvironmentSpecularScale = 0.6
 
@@ -1395,9 +1400,9 @@ local function setupLighting()
 	if not Lighting:FindFirstChild("Bloom") then
 		local bloom = Instance.new("BloomEffect")
 		bloom.Name = "Bloom"
-		bloom.Intensity = 0.6
-		bloom.Size = 24
-		bloom.Threshold = 0.9
+		bloom.Intensity = 0.35
+		bloom.Size = 20
+		bloom.Threshold = 1.6 -- only neon/lights bloom, not white walls
 		bloom.Parent = Lighting
 	end
 	if not Lighting:FindFirstChild("ColorCorrection") then
@@ -1405,7 +1410,7 @@ local function setupLighting()
 		cc.Name = "ColorCorrection"
 		cc.Saturation = 0.18
 		cc.Contrast = 0.06
-		cc.Brightness = 0.02
+		cc.Brightness = 0
 		cc.TintColor = C(255, 250, 242)
 		cc.Parent = Lighting
 	end

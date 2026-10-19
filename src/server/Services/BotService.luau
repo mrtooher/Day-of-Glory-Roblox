@@ -26,6 +26,13 @@ local dirty = false
 local POWER_RANGE = 10 -- bots consider using their power when an enemy is this close
 local CHASE_RADIUS = 25
 
+-- Each bot runs long trips in its own lane (main street or an alley) so the
+-- teams' bots don't all collide head-on in the middle (Studio test
+-- 2026-10-19: 0-0 after 5 min, bots tagging each other mid-field).
+local LANES = { 0, 70, -70 } -- z of main street, north alley, south alley
+local LANE_APPROACH = 45 -- leave the lane this many studs (X) before the target
+local laneOf: { [string]: number } = {}
+
 function BotService.init(services)
 	MatchService = services.MatchService
 	FoodService, PowerService = services.FoodService, services.PowerService
@@ -141,6 +148,11 @@ local function think(bot: Actor, path: Path)
 			target += towardCenter.Unit * 3
 		end
 	end
+	if decision.action == "raid" or decision.action == "return" then
+		local laneZ = laneOf[bot.id] or 0
+		local x, z = BotBrain.laneWaypoint(pos.X, target.X, target.Z, laneZ, LANE_APPROACH)
+		target = Vector3.new(x, target.Y, z)
+	end
 
 	local ok = pcall(function()
 		path:ComputeAsync(pos, target)
@@ -165,6 +177,7 @@ local function think(bot: Actor, path: Path)
 end
 
 local function despawn(bot: Actor)
+	laneOf[bot.id] = nil
 	FoodService.dropCarried(bot)
 	Actors.remove(bot)
 	bot.model:Destroy()
@@ -194,6 +207,7 @@ local function spawnBot(team: string)
 		role = "raider",
 	}
 	model.Name = bot.name
+	laneOf[id] = LANES[math.random(1, #LANES)]
 	model:PivotTo(MapService.spawnCFrame(team))
 	model.Parent = folder
 	root:SetNetworkOwner(nil) -- server drives bots

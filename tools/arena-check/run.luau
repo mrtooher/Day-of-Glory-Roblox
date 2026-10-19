@@ -181,6 +181,10 @@ end
 
 -- Main street corridor between the bases (ramps/bridge/pads are walkable).
 expectClear("main street corridor", { -140, 140, 0.5, 9, -12, 12 }, { "Ramp", "Bridge", "DashPad", "JumpPad" })
+-- Bot lanes (BotService LANES z = ±70): alleys open end to end.
+-- (from y 0.8: a low step like a 0.6 door step is walkable)
+expectClear("north alley lane", { -135, 135, 0.8, 6.5, 66, 74 }, { "DashPad", "JumpPad" })
+expectClear("south alley lane", { -135, 135, 0.8, 6.5, -74, -66 }, { "DashPad", "JumpPad" })
 -- Burger pickups reachable.
 for i, b in m.burgerSpawns do
 	expectClear("burger spawn " .. i, { b.x - 4, b.x + 4, 0.6, 8, b.z - 4, b.z + 4 }, { "BurgerSpawn" })

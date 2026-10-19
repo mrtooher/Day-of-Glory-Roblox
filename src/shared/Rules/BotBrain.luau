@@ -49,6 +49,19 @@ function BotBrain.decide<P>(input: Input<P>): Decision<P>
 	return { action = "raid", target = input.enemyPantry }
 end
 
+-- Long runs (raid / carry home) go through the bot's own lane (main street
+-- or an alley) so the two teams' bots don't all collide head-on down the
+-- middle. Returns where to walk now: a point in the lane `approach` studs
+-- short of the target, or the target itself once that close in X.
+function BotBrain.laneWaypoint(posX: number, targetX: number, targetZ: number, laneZ: number, approach: number): (number, number)
+	local dx = targetX - posX
+	if math.abs(dx) <= approach + 5 then
+		return targetX, targetZ
+	end
+	local dir = if dx > 0 then 1 else -1
+	return targetX - dir * approach, laneZ
+end
+
 -- Roles for `count` bots: about `defenderShare` defend (at least one once there
 -- are two or more bots), the rest raid.
 function BotBrain.assignRoles(count: number, defenderShare: number): { Role }

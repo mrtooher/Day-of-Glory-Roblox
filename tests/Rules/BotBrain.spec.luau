@@ -79,4 +79,32 @@ return function(t)
 			BotBrain.decide(input({ role = "goalie" }))
 		end)
 	end)
+
+	t.test("laneWaypoint: far from target -> lane point short of it", function()
+		-- Red raider at its base heading to Blue pantry (180, 0), using north alley z 70.
+		local x, z = BotBrain.laneWaypoint(-180, 177, 0, 70, 45)
+		t.eq(x, 132)
+		t.eq(z, 70)
+		-- Same going the other way (Blue raider to Red pantry).
+		x, z = BotBrain.laneWaypoint(180, -177, 0, -70, 45)
+		t.eq(x, -132)
+		t.eq(z, -70)
+	end)
+
+	t.test("laneWaypoint: close in X -> straight to the target", function()
+		local x, z = BotBrain.laneWaypoint(135, 177, 0, 70, 45)
+		t.eq(x, 177)
+		t.eq(z, 0)
+		x, z = BotBrain.laneWaypoint(177, 177, 0, 70, 45)
+		t.eq(x, 177)
+		t.eq(z, 0)
+	end)
+
+	t.test("laneWaypoint: lane point is reached before switching (no ping-pong)", function()
+		-- Standing on the lane point itself must route to the target.
+		local lx, lz = BotBrain.laneWaypoint(-180, 177, 0, 0, 45)
+		local x, z = BotBrain.laneWaypoint(lx, 177, 0, 0, 45)
+		t.eq(x, 177)
+		t.eq(z, 0)
+	end)
 end
