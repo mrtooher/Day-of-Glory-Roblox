@@ -132,7 +132,7 @@ function GameFeel.start()
 	hint.Name = "Hint"
 	hint.AnchorPoint = Vector2.new(0.5, 1)
 	hint.Position = UDim2.new(0.5, 0, 1, -76)
-	hint.Size = UDim2.fromOffset(360, 22)
+	hint.Size = UDim2.fromOffset(300, 26)
 	hint.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
 	hint.BackgroundTransparency = 0.3
 	hint.Font = Enum.Font.GothamBold
@@ -144,9 +144,9 @@ function GameFeel.start()
 	hintCorner.CornerRadius = UDim.new(0, 8)
 	hintCorner.Parent = hint
 	local hintLimit = Instance.new("UISizeConstraint")
-	hintLimit.MaxSize = Vector2.new(360, 22)
+	hintLimit.MaxSize = Vector2.new(300, 26)
 	hintLimit.Parent = hint
-	hint.Size = UDim2.new(0.7, 0, 0, 22)
+	hint.Size = UDim2.new(0.7, 0, 0, 26)
 
 	-- Kitchen markers and drop-off attachments.
 	type Kitchen = { pantry: BasePart?, dropoff: BasePart?, marker: BillboardGui?, label: TextLabel?, attach: Attachment? }
@@ -385,7 +385,7 @@ function GameFeel.start()
 		-- How-to hint at the start of each match.
 		if playing and now < hintUntil and not carrying then
 			hint.Visible = true
-			hint.Text = "Grab enemy food (counter + 2 rooftops), bring it home"
+			hint.Text = "Grab enemy food, bring it home!"
 		elseif carrying then
 			hint.Visible = true
 			hint.Text = "Follow the beam home!"

@@ -330,13 +330,14 @@ function FoodService.start()
 			table.insert(placed, { slot = s, pos = kitchen.pantry + Vector3.new(o.X, o.Y, o.Z), roof = false })
 		end
 		for _, p in placed do
-			for _ = 1, Config.PantrySlotsPerType do
+			for copy = 1, Config.PantrySlotsPerType do
 				local foodType = p.slot.foodType
 				local item: Item = {
 					food = FoodState.new(t.id, foodType),
 					part = buildFood(foodType),
 					rot = looks[foodType].root.offset,
-					slot = p.pos :: Vector3,
+					-- Extra copies (PantrySlotsPerType > 1) stand side by side, not stacked.
+					slot = (p.pos :: Vector3) + Vector3.new(0, 0, (copy - 1) * 1.2),
 					onRoof = p.roof,
 				}
 				-- Clients use these for the food beacon and markers.

@@ -1,7 +1,9 @@
 # Tasks for Qwen (paste-ready)
 
 How to use (same workflow as before): paste ONE prompt below into Qwen, then
-paste the files it lists (from GitHub, branch `main`). Qwen returns full files.
+paste the files it lists (from GitHub, branch `main`). **Merge PR #14 first**:
+Tasks 2–4 return whole files (Hud.luau, CharacterSelect.luau), so pasting an
+older copy would undo that PR's changes. Qwen returns full files.
 Send them to Claude to review, fix, test and open the PR. Never merge Qwen
 output unreviewed: every past draft needed real fixes.
 

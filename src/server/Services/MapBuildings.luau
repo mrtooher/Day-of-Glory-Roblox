@@ -1550,7 +1550,7 @@ local function buildRooftopFood(root: Instance)
 	roofFoodStand(f, "RedRoofFood1", -127, 57, 13, red, V(1, 0, 0))
 
 	-- Red 2: Burger Joint (x -135..-105, z -65..-35, roof 10). Stairs up the
-	-- west wall, 7 rises of 1.43, landing at z -50.4..-55.4 (parapet gap).
+	-- west wall, 7 rises of 1.43, landing at z -50.2..-55.2 (parapet gap).
 	local s2 = newFolder(f, "RedBurgerStairs")
 	straightRoofStair(s2, "RedRoofStair2Step", -140, -135, -1, -37, -1, 10, 7, 2.2, redSteps, red)
 	roofFoodStand(f, "RedRoofFood2", -127, -53, 10, red, V(1, 0, 0))

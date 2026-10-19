@@ -52,8 +52,25 @@ Stage 6: double-check panel.
 | 20 | 5 | same run: Pizza Palace view after fix | UNVERIFIABLE | could not bring the Red client window forward (cmd+` / clicks stayed on the Blue client) |
 | 21 | 1,5 | same run: server log `[Food]` | PASS | `Bot 6 grabbed RED's taco!` (base counter) + `Bot 5/6 grabbed RED's sushi!` (roof) · `0` CreatorError on server + 2 clients |
 | 22 | 3 | beacon audible | UNVERIFIABLE | no audio capture here; `rbxasset://sounds/volume_slider.ogg` exists in Studio content (listed); no "Failed to load sound" in client logs |
+| 23 | 6 | double-check finding: roof entry unchecked; new harness guard on current map | PASS | `ARENA CHECK: 96 passed, 0 failed` |
+| 24 | 6 | same guard with Apts `sideGap` moved off the landing (temp edit, restored) | FAIL (intended) | `FAIL BlueRoofStair1 opens onto the roof, blocked by: Parapet` · `95 passed, 1 failed` |
+| 25 | 6 | after copy-offset, hint, Qwen-note, comment fixes: `luau-lsp` + tests + arena | PASS | `lsp exit=0` · `TOTAL: 134 passed, 0 failed` · `ARENA CHECK: 96 passed, 0 failed` |
 
 ## Double-check
+
+```
+Double-check: 12 claims + 6 requirements.
+PASS: 12 claims; R1–R6 PASS (R2 bot climbing + R3 beacon sound UNVERIFIABLE from the checkers' side). FIXED after FAIL: 5 (roof-entry not guarded; copies would stack if PantrySlotsPerType > 1; hint too small to read; Qwen doc merge-order trap; wrong landing z in a comment + garbled open item). UNVERIFIABLE: beacon audibility, Pizza Palace lighting after fix, Studio rows from the checkers' side.
+Checkers: 1× Haiku (mechanical), 1× Sonnet (requirements/logic), 1 Haiku re-check round (C1–C6 all CONFIRMED)
+FINAL-COLD-CHECK: no (full panel ran)
+```
+
+- Fixed: roof entry not guarded → harness checks the top step opens onto the roof; proven red with a misplaced gap (rows 23–24).
+- Fixed: extra food copies would stack on one slot → side by side (z + 1.2 per copy).
+- Fixed: hint 53 chars in 22 px → "Grab enemy food, bring it home!" in 26 px.
+- Fixed: QWEN-TASKS said paste from `main` → "merge PR #14 first" (whole-file returns would undo HUD changes).
+- Fixed: landing z comment (-50.4 → -50.2) and the garbled open item.
+- Flagged to Jim, not changed: Blue roofs taller than Red (balance); beacon pings under roofs you can't reach from the street.
 
 ## Self-review (step 4)
 
@@ -64,5 +81,8 @@ Stage 6: double-check panel.
 
 - **Beacon sound** not heard by anyone yet (row 22). Uses the Roblox built-in settings-slider tick; Jim may prefer a custom ping (set `Config.Audio.sfx.beacon`).
 - **Pizza Palace lighting** after the light damping not seen (row 20); Taco Town confirmed fine.
-- **Human on the stairs/roofs** not driven by hand; bots climbed all four roofs' stairs in logs (rows 14, 21) except Burger Joint grabs were Blue-side bots on the Arcade… Red Burger Joint roof grab not yet in logs.
+- **Human on the stairs/roofs** not driven by hand. Bot roof grabs in the logs: Red Sushi Bar, Blue Arcade, Blue Sunny Apts (rows 14, 21). No grab from the Red Burger Joint roof logged yet.
+- **Balance (design, for Jim)**: Blue's rooftop food sits on roofs 24 (Sunny Apts) and 16 (Arcade); Red's on 13 (Sushi Bar) and 10 (Burger Joint). Red raiders climb ~40 studs total vs ~23 for Blue. Options: lower Sunny Apts, or put Blue's roof food on Cafe/Shop instead (not the nearest buildings).
+- **Beacon pings under rooftop food** you can't grab from the street (3D distance, not reach). Kept as "metal detector" (it tells you food is above); change if it confuses players.
+- **Hint text** at 26 px on phones not checked.
 - **Jim's "go live on fortnite"**: this game is built for Roblox (Luau/Rojo). Fortnite uses UEFN + Verse; nothing here ports directly. Needs Jim to confirm which platform.

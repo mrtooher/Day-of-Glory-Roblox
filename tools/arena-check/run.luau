@@ -263,6 +263,23 @@ for team, spots in roofSpots do
 		check(riseOk, team .. "RoofStair" .. k .. " every rise <= " .. MAX_RISE)
 		check(headOk, team .. "RoofStair" .. k .. " headroom above every step")
 		check(#steps > 0 and math.abs(prevTop - roofTop) <= MAX_RISE, team .. "RoofStair" .. k .. " reaches the roof (last top " .. prevTop .. ", roof " .. roofTop .. ")")
+		-- Roof entry: stepping off the top step toward the pedestal must not be
+		-- walled off (parapet gap lines up with the landing).
+		if #steps > 0 and marker then
+			local last = steps[#steps]
+			local a1, b1 = aabb(last)
+			local mp = position(marker)
+			local cx, cz = (a1.X + b1.X) / 2, (a1.Z + b1.Z) / 2
+			local dx, dz = mp.X - cx, mp.Z - cz
+			local sx, sz = 0, 0
+			if math.abs(dx) >= math.abs(dz) then
+				sx = if dx > 0 then 3 else -3
+			else
+				sz = if dz > 0 then 3 else -3
+			end
+			local entry = blockers({ a1.X + sx, b1.X + sx, prevTop + 0.3, prevTop + 5.5, a1.Z + sz, b1.Z + sz }, { team .. "RoofStair" .. k })
+			check(#entry == 0, team .. "RoofStair" .. k .. " opens onto the roof, blocked by: " .. table.concat(entry, ", "))
+		end
 	end
 end
 
