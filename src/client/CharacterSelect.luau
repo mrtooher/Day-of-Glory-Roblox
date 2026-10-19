@@ -1,9 +1,7 @@
 --!strict
--- Character picker: a "CHARACTER" button opens a grid of the 8 characters.
--- The server enforces the max-2-per-team rule and replies via attributes.
-
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ContextActionService = game:GetService("ContextActionService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Net = require(ReplicatedStorage.Shared.Net)
@@ -11,14 +9,8 @@ local Net = require(ReplicatedStorage.Shared.Net)
 local CharacterSelect = {}
 
 local names: { [string]: string } = {
-	Kelly = "Kelly",
-	Sol = "Sol",
-	Vex = "Vex",
-	Pim = "Pim",
-	Cop = "Cop",
-	Dog = "Dog",
-	PizzaMan = "Pizza Man",
-	Cook = "Cook",
+	Kelly = "Kelly", Sol = "Sol", Vex = "Vex", Pim = "Pim",
+	Cop = "Cop", Dog = "Dog", PizzaMan = "Pizza Man", Cook = "Cook",
 }
 
 function CharacterSelect.start()
@@ -30,16 +22,16 @@ function CharacterSelect.start()
 	gui.Name = "CharacterSelect"
 	gui.ResetOnSpawn = false
 
-	local open = Instance.new("TextButton")
-	open.Name = "Open"
-	open.AnchorPoint = Vector2.new(0, 1)
-	open.Position = UDim2.new(0, 10, 1, -10)
-	open.Size = UDim2.fromOffset(140, 44)
-	open.Font = Enum.Font.GothamBlack
-	open.TextScaled = true
-	open.Text = "CHARACTER"
-	open.BackgroundColor3 = Color3.fromRGB(255, 190, 60)
-	open.Parent = gui
+	local openBtn = Instance.new("TextButton")
+	openBtn.Name = "Open"
+	openBtn.AnchorPoint = Vector2.new(0, 1)
+	openBtn.Position = UDim2.new(0, 10, 1, -10)
+	openBtn.Size = UDim2.fromOffset(140, 44)
+	openBtn.Font = Enum.Font.GothamBlack
+	openBtn.TextScaled = true
+	openBtn.Text = "CHARACTER"
+	openBtn.BackgroundColor3 = Color3.fromRGB(255, 190, 60)
+	openBtn.Parent = gui
 
 	local panel = Instance.new("Frame")
 	panel.Name = "Panel"
@@ -50,6 +42,7 @@ function CharacterSelect.start()
 	panel.BackgroundTransparency = 0.1
 	panel.Visible = false
 	panel.Parent = gui
+	
 	local limit = Instance.new("UISizeConstraint")
 	limit.MaxSize = Vector2.new(560, 360)
 	limit.Parent = panel
@@ -64,17 +57,50 @@ function CharacterSelect.start()
 	status.Text = "Pick a character (max 2 per team)"
 	status.Parent = panel
 
+	-- FIX: Added Close (X) button
+	local closeBtn = Instance.new("TextButton")
+	closeBtn.Name = "Close"
+	closeBtn.AnchorPoint = Vector2.new(1, 0)
+	closeBtn.Position = UDim2.new(1, -10, 0, 10)
+	closeBtn.Size = UDim2.fromOffset(30, 30)
+	closeBtn.Font = Enum.Font.GothamBlack
+	closeBtn.TextScaled = true
+	closeBtn.Text = "X"
+	closeBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+	closeBtn.TextColor3 = Color3.new(1, 1, 1)
+	closeBtn.Parent = panel
+
 	local grid = Instance.new("Frame")
 	grid.Name = "Grid"
 	grid.Position = UDim2.new(0, 0, 0, 36)
 	grid.Size = UDim2.new(1, 0, 1, -36)
 	grid.BackgroundTransparency = 1
 	grid.Parent = panel
+	
 	local layout = Instance.new("UIGridLayout")
 	layout.CellSize = UDim2.new(0.25, -8, 0.5, -8)
 	layout.CellPadding = UDim2.fromOffset(8, 8)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = grid
+
+	local function closePanel()
+		panel.Visible = false
+	end
+
+	closeBtn.Activated:Connect(closePanel)
+
+	openBtn.Activated:Connect(function()
+		panel.Visible = not panel.Visible
+	end)
+
+	-- FIX: Bind Esc and Gamepad B to close the panel
+	ContextActionService:BindAction("CloseCharacterSelect", function(_, inputState)
+		if inputState == Enum.UserInputState.Begin and panel.Visible then
+			closePanel()
+			return Enum.ContextActionResult.Sink
+		end
+		return Enum.ContextActionResult.Pass
+	end, false, Enum.KeyCode.Escape, Enum.KeyCode.ButtonB)
 
 	for i, c in Config.Characters do
 		local b = Instance.new("TextButton")
@@ -89,12 +115,9 @@ function CharacterSelect.start()
 		b.Parent = grid
 		b.Activated:Connect(function()
 			request:FireServer(c.id)
+			closePanel() -- FIX: Close panel when a character is picked
 		end)
 	end
-
-	open.Activated:Connect(function()
-		panel.Visible = not panel.Visible
-	end)
 
 	local function refresh()
 		local current = player:GetAttribute("CharacterId")
@@ -104,14 +127,15 @@ function CharacterSelect.start()
 		elseif type(current) == "string" then
 			status.Text = "You are " .. (names[current] or current)
 		end
-		for _, b in grid:GetChildren() do
-			if b:IsA("TextButton") then
-				b.BackgroundColor3 = if b.Name == current
+		for _, child in grid:GetChildren() do
+			if child:IsA("TextButton") then
+				child.BackgroundColor3 = if child.Name == current
 					then Color3.fromRGB(255, 170, 40)
 					else Color3.fromRGB(70, 70, 95)
 			end
 		end
 	end
+	
 	player:GetAttributeChangedSignal("CharacterId"):Connect(refresh)
 	player:GetAttributeChangedSignal("SelectError"):Connect(refresh)
 	refresh()
