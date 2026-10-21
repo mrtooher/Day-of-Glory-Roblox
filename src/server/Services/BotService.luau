@@ -132,11 +132,22 @@ local function think(bot: Actor, path: Path)
 		end
 	end
 
+	-- Raid the nearest enemy food still in place (counter or rooftop), not
+	-- always the counter: with food on roofs the counter can be empty.
+	local raidTarget, raidOnRoof = enemyKitchen.pantry, false
+	local bestRaid = math.huge
+	for _, f in FoodService.available(MapService.enemyOf(bot.team)) do
+		local d = (f.position - pos).Magnitude
+		if d < bestRaid then
+			bestRaid, raidTarget, raidOnRoof = d, f.position, f.onRoof
+		end
+	end
+
 	local decision = BotBrain.decide({
 		role = (bot.role or "raider") :: any,
 		carrying = bot.carrying,
 		homeDropoff = home.dropoff,
-		enemyPantry = enemyKitchen.pantry,
+		enemyPantry = raidTarget,
 		guardPoint = home.guard,
 		intruder = intruder,
 		droppedTeamFood = nearest(pos, FoodService.droppedBy(bot.team)),
@@ -148,7 +159,7 @@ local function think(bot: Actor, path: Path)
 	end
 
 	local target: Vector3 = decision.target
-	if decision.action == "raid" then
+	if decision.action == "raid" and not raidOnRoof then
 		-- Walk up to the pantry's front, not into the counter.
 		local towardCenter = Vector3.new(Config.Map.centerX - target.X, 0, 0)
 		if towardCenter.Magnitude > 0 then

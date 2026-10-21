@@ -190,6 +190,99 @@ for i, b in m.burgerSpawns do
 	expectClear("burger spawn " .. i, { b.x - 4, b.x + 4, 0.6, 8, b.z - 4, b.z + 4 }, { "BurgerSpawn" })
 end
 
+-- 3b. Rooftop food (Config.FoodLayout.roof): <Team>RoofFood1/2 pedestals on
+-- the roofs of the two buildings nearest each base, each reachable by stairs
+-- <Team>RoofStair<k>Step<n> (bots can't use jump pads).
+local roofSpots = {
+	-- [team] = { { name, x1, x2, z1, z2, roofTop } } (building footprint, roof height)
+	Red = {
+		{ "RedRoofFood1", -135, -105, 35, 65, 13 }, -- Sushi Bar
+		{ "RedRoofFood2", -135, -105, -65, -35, 10 }, -- Burger Joint
+	},
+	Blue = {
+		{ "BlueRoofFood1", 105, 135, 35, 65, 24 }, -- Sunny Apts
+		{ "BlueRoofFood2", 105, 135, -65, -35, 16 }, -- Arcade
+	},
+}
+local MAX_RISE = 1.6
+for team, spots in roofSpots do
+	for k, spot in spots do
+		local name, x1, x2, z1, z2, roofTop = spot[1], spot[2], spot[3], spot[4], spot[5], spot[6]
+		local marker = find(name)
+		check(marker ~= nil and marker:IsA("BasePart") and marker.CanCollide, name .. " exists and is collidable")
+		if marker then
+			local mp = position(marker)
+			check(mp.X > x1 and mp.X < x2 and mp.Z > z1 and mp.Z < z2, name .. " inside its building footprint, got " .. tostring(mp))
+			local bottom = mp.Y - marker.Size.Y / 2
+			check(math.abs(bottom - roofTop) < 0.6, name .. " sits on the roof (bottom ≈ " .. roofTop .. "), got bottom " .. bottom)
+			check(marker.Size.Y <= 2.5, name .. " low enough to grab from the roof (height <= 2.5)")
+			-- Headroom: food rests on top; a player stands next to it.
+			local top = mp.Y + marker.Size.Y / 2
+			expectClear(name .. " headroom", { mp.X - 4, mp.X + 4, top + 0.05, top + 7, mp.Z - 4, mp.Z + 4 })
+			-- Standing room on the roof around the pedestal (one side at least).
+			local sides = 0
+			for _, d in { { 5, 0 }, { -5, 0 }, { 0, 5 }, { 0, -5 } } do
+				local bx, bz = mp.X + d[1], mp.Z + d[2]
+				if #blockers({ bx - 1.5, bx + 1.5, roofTop + 0.3, roofTop + 6, bz - 1.5, bz + 1.5 }) == 0 then
+					sides += 1
+				end
+			end
+			check(sides >= 1, name .. " has standing room beside it on the roof")
+		end
+
+		-- Stairs: steps 1..N, each rise <= MAX_RISE, first from the ground, last
+		-- reaching the roof, headroom above every step.
+		local steps = {}
+		local n = 1
+		while true do
+			local st = find(team .. "RoofStair" .. k .. "Step" .. n)
+			if not st then
+				break
+			end
+			table.insert(steps, st)
+			n += 1
+		end
+		check(#steps >= 2, team .. "RoofStair" .. k .. " has steps (got " .. #steps .. ")")
+		local prevTop = 0
+		local riseOk, headOk = true, true
+		for i, st in steps do
+			local sp = position(st)
+			local top = sp.Y + st.Size.Y / 2
+			if top - prevTop > MAX_RISE + 0.01 then
+				riseOk = false
+				print(string.format("  %sRoofStair%dStep%d rise %.2f", team, k, i, top - prevTop))
+			end
+			prevTop = top
+			local a1, b1 = aabb(st)
+			local above = blockers({ a1.X, b1.X, top + 0.05, top + 5.5, a1.Z, b1.Z }, { team .. "RoofStair" .. k })
+			if #above > 0 then
+				headOk = false
+				print(string.format("  %sRoofStair%dStep%d blocked above by: %s", team, k, i, table.concat(above, ", ")))
+			end
+		end
+		check(riseOk, team .. "RoofStair" .. k .. " every rise <= " .. MAX_RISE)
+		check(headOk, team .. "RoofStair" .. k .. " headroom above every step")
+		check(#steps > 0 and math.abs(prevTop - roofTop) <= MAX_RISE, team .. "RoofStair" .. k .. " reaches the roof (last top " .. prevTop .. ", roof " .. roofTop .. ")")
+		-- Roof entry: stepping off the top step toward the pedestal must not be
+		-- walled off (parapet gap lines up with the landing).
+		if #steps > 0 and marker then
+			local last = steps[#steps]
+			local a1, b1 = aabb(last)
+			local mp = position(marker)
+			local cx, cz = (a1.X + b1.X) / 2, (a1.Z + b1.Z) / 2
+			local dx, dz = mp.X - cx, mp.Z - cz
+			local sx, sz = 0, 0
+			if math.abs(dx) >= math.abs(dz) then
+				sx = if dx > 0 then 3 else -3
+			else
+				sz = if dz > 0 then 3 else -3
+			end
+			local entry = blockers({ a1.X + sx, b1.X + sx, prevTop + 0.3, prevTop + 5.5, a1.Z + sz, b1.Z + sz }, { team .. "RoofStair" .. k })
+			check(#entry == 0, team .. "RoofStair" .. k .. " opens onto the roof, blocked by: " .. table.concat(entry, ", "))
+		end
+	end
+end
+
 -- 4. Pads -------------------------------------------------------------------
 local dash, jump = 0, 0
 for _, p in parts do

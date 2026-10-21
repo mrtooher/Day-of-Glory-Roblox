@@ -10,6 +10,7 @@ export type Kitchen = {
 	dropoff: Vector3,
 	spawn: Vector3,
 	guard: Vector3,
+	roofFood: { [number]: Vector3 }, -- top centre of <Team>RoofFood<k> pedestals
 }
 
 local MapService = {}
@@ -57,9 +58,9 @@ local function buildSwitchZone(teamId: string, spawnPart: BasePart)
 
 	local sign = Instance.new("BillboardGui")
 	sign.Name = "SwitchSign"
-	sign.Size = UDim2.fromOffset(220, 40)
-	sign.StudsOffset = Vector3.new(0, 9, 0)
-	sign.MaxDistance = 80
+	sign.Size = UDim2.fromOffset(130, 22)
+	sign.StudsOffset = Vector3.new(0, 11, 0)
+	sign.MaxDistance = 45
 	sign.Adornee = spawnPart
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)
@@ -68,7 +69,7 @@ local function buildSwitchZone(teamId: string, spawnPart: BasePart)
 	label.TextScaled = true
 	label.TextColor3 = Color3.new(1, 1, 1)
 	label.TextStrokeTransparency = 0.3
-	label.Text = "SWITCH CHARACTER HERE"
+	label.Text = "SWITCH CHARACTER"
 	label.Parent = sign
 	sign.Parent = disc
 end
@@ -87,11 +88,21 @@ function MapService.start()
 	for _, t in Config.Teams do
 		local pantry = marker(t.id .. "Pantry").Position
 		local center = Vector3.new(Config.Map.centerX, pantry.Y, pantry.Z)
+		local roofFood: { [number]: Vector3 } = {}
+		for k = 1, #Config.FoodLayout.roof do
+			local p = arena:FindFirstChild(t.id .. "RoofFood" .. k, true)
+			if p and p:IsA("BasePart") then
+				roofFood[k] = p.Position + Vector3.new(0, p.Size.Y / 2, 0)
+			else
+				warn("MapService: missing " .. t.id .. "RoofFood" .. k .. " - that food goes on the counter")
+			end
+		end
 		kitchens[t.id] = {
 			pantry = pantry,
 			dropoff = marker(t.id .. "Dropoff").Position,
 			spawn = marker(t.id .. "Spawn").Position,
 			guard = pantry:Lerp(center, 0.35),
+			roofFood = roofFood,
 		}
 		buildSwitchZone(t.id, marker(t.id .. "Spawn"))
 	end

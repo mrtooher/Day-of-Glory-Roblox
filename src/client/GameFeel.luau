@@ -15,10 +15,12 @@ local TweenService = game:GetService("TweenService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Net = require(ReplicatedStorage.Shared.Net)
+local Beacon = require(ReplicatedStorage.Shared.Rules.Beacon)
+local AudioRules = require(ReplicatedStorage.Shared.Rules.AudioRules)
 
 local GameFeel = {}
 
-local HINT_SECONDS = 20
+local HINT_SECONDS = 12
 
 local function teamColor(teamId: string): Color3
 	for _, t in Config.Teams do
@@ -32,8 +34,11 @@ end
 local function bigText(gui: ScreenGui, text: string, color: Color3, seconds: number)
 	local label = Instance.new("TextLabel")
 	label.AnchorPoint = Vector2.new(0.5, 0.5)
-	label.Position = UDim2.fromScale(0.5, 0.3)
-	label.Size = UDim2.fromScale(0.8, 0.12)
+	label.Position = UDim2.fromScale(0.5, 0.2)
+	label.Size = UDim2.fromScale(0.5, 0.06)
+	local limit = Instance.new("UISizeConstraint")
+	limit.MaxSize = Vector2.new(460, 44)
+	limit.Parent = label
 	label.BackgroundTransparency = 1
 	label.Font = Enum.Font.GothamBlack
 	label.TextScaled = true
@@ -91,8 +96,8 @@ end
 local function kitchenMarker(adornee: BasePart): (BillboardGui, TextLabel)
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "KitchenMarker"
-	gui.Size = UDim2.fromOffset(200, 56)
-	gui.StudsOffset = Vector3.new(0, 9, 0)
+	gui.Size = UDim2.fromOffset(110, 26)
+	gui.StudsOffset = Vector3.new(0, 7, 0)
 	gui.AlwaysOnTop = true
 	gui.LightInfluence = 0
 	gui.Adornee = adornee
@@ -126,8 +131,8 @@ function GameFeel.start()
 	local hint = Instance.new("TextLabel")
 	hint.Name = "Hint"
 	hint.AnchorPoint = Vector2.new(0.5, 1)
-	hint.Position = UDim2.new(0.5, 0, 1, -90)
-	hint.Size = UDim2.fromOffset(520, 34)
+	hint.Position = UDim2.new(0.5, 0, 1, -76)
+	hint.Size = UDim2.fromOffset(300, 26)
 	hint.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
 	hint.BackgroundTransparency = 0.3
 	hint.Font = Enum.Font.GothamBold
@@ -139,9 +144,9 @@ function GameFeel.start()
 	hintCorner.CornerRadius = UDim.new(0, 8)
 	hintCorner.Parent = hint
 	local hintLimit = Instance.new("UISizeConstraint")
-	hintLimit.MaxSize = Vector2.new(520, 34)
+	hintLimit.MaxSize = Vector2.new(300, 26)
 	hintLimit.Parent = hint
-	hint.Size = UDim2.new(0.9, 0, 0, 34)
+	hint.Size = UDim2.new(0.7, 0, 0, 26)
 
 	-- Kitchen markers and drop-off attachments.
 	type Kitchen = { pantry: BasePart?, dropoff: BasePart?, marker: BillboardGui?, label: TextLabel?, attach: Attachment? }
@@ -164,6 +169,54 @@ function GameFeel.start()
 			k.attach = a
 		end
 		kitchens[t.id] = k
+	end
+
+	-- Small "FOOD" tags over rooftop pedestals (shown for the enemy's roofs
+	-- while food is on them and you're not right there).
+	type RoofTag = { team: string, pedestal: BasePart, gui: BillboardGui }
+	local roofTags: { RoofTag } = {}
+	for _, t in Config.Teams do
+		for k = 1, #Config.FoodLayout.roof do
+			local pedestal = arena:FindFirstChild(t.id .. "RoofFood" .. k, true) :: BasePart?
+			if pedestal then
+				local tag = Instance.new("BillboardGui")
+				tag.Name = "RoofFoodTag"
+				tag.Size = UDim2.fromOffset(64, 20)
+				tag.StudsOffset = Vector3.new(0, 5, 0)
+				tag.AlwaysOnTop = true
+				tag.LightInfluence = 0
+				tag.Adornee = pedestal
+				tag.Enabled = false
+				local l = Instance.new("TextLabel")
+				l.Size = UDim2.fromScale(1, 1)
+				l.BackgroundTransparency = 0.3
+				l.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+				l.Font = Enum.Font.GothamBlack
+				l.TextScaled = true
+				l.TextColor3 = Color3.fromRGB(255, 220, 60)
+				l.Text = "FOOD"
+				l.Parent = tag
+				local c = Instance.new("UICorner")
+				c.CornerRadius = UDim.new(0, 6)
+				c.Parent = l
+				tag.Parent = gui
+				table.insert(roofTags, { team = t.id, pedestal = pedestal, gui = tag })
+			end
+		end
+	end
+	local foodFolderForTags = Workspace:FindFirstChild("Food")
+	local function foodOn(pedestal: BasePart): boolean
+		local folder = foodFolderForTags or Workspace:FindFirstChild("Food")
+		foodFolderForTags = folder
+		if not folder then
+			return false
+		end
+		for _, p in folder:GetChildren() do
+			if p:IsA("BasePart") and p.Anchored and (p.Position - pedestal.Position).Magnitude < 4 then
+				return true
+			end
+		end
+		return false
 	end
 
 	-- Guide beam + pillar (shown only while carrying).
@@ -210,6 +263,49 @@ function GameFeel.start()
 		end)
 	end
 
+	-- Food beacon: ping faster/higher the closer you are to enemy food you
+	-- could grab (resting on a counter, a roof, or dropped). Not while carrying.
+	task.spawn(function()
+		local foodFolder = Workspace:WaitForChild("Food", 30)
+		if not foodFolder then
+			return
+		end
+		local ping = Instance.new("Sound")
+		ping.Name = "FoodBeacon"
+		ping.SoundId = AudioRules.assetUri(Config.Audio.sfx.beacon) or Config.Beacon.builtinSound
+		ping.Volume = Config.Beacon.volume
+		local SoundService = game:GetService("SoundService")
+		local sfxGroup = SoundService:FindFirstChild("Sfx")
+		if sfxGroup and sfxGroup:IsA("SoundGroup") then
+			ping.SoundGroup = sfxGroup -- the SOUND ON/OFF button mutes it too
+		end
+		ping.Parent = SoundService
+		local nextPing = 0
+		while true do
+			local character = player.Character
+			local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+			local myTeam = if player.Team then player.Team.Name else nil
+			local nearest = math.huge
+			if root and myTeam and state:GetAttribute("Phase") == "Playing" and character:GetAttribute("Carrying") ~= true then
+				for _, p in foodFolder:GetChildren() do
+					if p:IsA("BasePart") and p.Anchored and p:GetAttribute("Owner") ~= myTeam then
+						nearest = math.min(nearest, (p.Position - root.Position).Magnitude)
+					end
+				end
+			end
+			local gap = Beacon.interval(nearest, Config.Beacon)
+			local now = os.clock()
+			if gap and now >= nextPing then
+				ping.PlaybackSpeed = Beacon.pitch(nearest, Config.Beacon)
+				ping:Play()
+				nextPing = now + gap
+			elseif not gap then
+				nextPing = 0
+			end
+			task.wait(0.05)
+		end
+	end)
+
 	local wasCarrying = false
 	local hintUntil = 0
 	local lastPhase = state:GetAttribute("Phase")
@@ -238,10 +334,10 @@ function GameFeel.start()
 					label.Text = string.upper(teamId) .. " KITCHEN"
 					label.TextColor3 = teamColor(teamId)
 				elseif teamId == myTeam then
-					label.Text = string.format("DEFEND  %dm", dist)
+					label.Text = "DEFEND"
 					label.TextColor3 = teamColor(teamId)
 				else
-					label.Text = string.format("RAID HERE!  %dm", dist)
+					label.Text = string.format("RAID %dm", dist)
 					label.TextColor3 = Color3.fromRGB(255, 220, 60)
 				end
 				-- Your own marker only shows when you're away from home.
@@ -249,6 +345,11 @@ function GameFeel.start()
 					k.marker.Enabled = not (teamId == myTeam and dist < 40)
 				end
 			end
+		end
+
+		for _, rt in roofTags do
+			local far = root == nil or (root.Position - rt.pedestal.Position).Magnitude > 20
+			rt.gui.Enabled = playing and myTeam ~= nil and rt.team ~= myTeam and far and foodOn(rt.pedestal)
 		end
 
 		-- Carrying: beam to your drop-off + pillar + "RUN HOME".
@@ -284,10 +385,10 @@ function GameFeel.start()
 		-- How-to hint at the start of each match.
 		if playing and now < hintUntil and not carrying then
 			hint.Visible = true
-			hint.Text = "Run to the RAID HERE marker, walk up to their counter to grab food, bring it home!"
+			hint.Text = "Grab enemy food, bring it home!"
 		elseif carrying then
 			hint.Visible = true
-			hint.Text = "Follow the beam to your glowing drop-off!  Don't get tagged!"
+			hint.Text = "Follow the beam home!"
 		else
 			hint.Visible = false
 		end

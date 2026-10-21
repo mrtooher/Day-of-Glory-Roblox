@@ -80,10 +80,13 @@ function Hud.start()
 	local announce = label(gui, {
 		Name = "Announce",
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 56),
-		Size = UDim2.new(0.8, 0, 0, 28),
+		Position = UDim2.new(0.5, 0, 0, 54),
+		Size = UDim2.new(0.45, 0, 0, 18),
 		Text = "",
 	})
+	local announceLimit = Instance.new("UISizeConstraint")
+	announceLimit.MaxSize = Vector2.new(420, 18)
+	announceLimit.Parent = announce
 
 	local carrying = label(gui, {
 		Name = "Carrying",
@@ -134,10 +137,8 @@ function Hud.start()
 			phase.Text = phaseText[p] or p
 		end
 
-		local character = player.Character
-		carrying.Text = if character and character:GetAttribute("Carrying")
-			then "You have food! Run to your drop-off!"
-			else ""
+		-- The "follow the beam home" pill (GameFeel) covers the carry message now.
+		carrying.Text = ""
 
 		task.wait(0.2)
 	end

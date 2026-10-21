@@ -9,6 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage.Shared.Config)
 local FoodState = require(ReplicatedStorage.Shared.Rules.FoodState)
 local Reach = require(ReplicatedStorage.Shared.Rules.Reach)
+local FoodLayout = require(ReplicatedStorage.Shared.Rules.FoodLayout)
 local Remotes = require(script.Parent.Remotes)
 local MapService = require(script.Parent.MapService)
 local Actors = require(script.Parent.Actors)
@@ -19,6 +20,7 @@ type Item = {
 	part: BasePart,
 	rot: CFrame, -- the food root's resting orientation
 	slot: Vector3,
+	onRoof: boolean, -- sits on a rooftop pedestal (not the base counter)
 	weld: WeldConstraint?,
 }
 
@@ -210,6 +212,18 @@ function FoodService.dropCarried(actor: Actor)
 	Actors.setCarrying(actor, false)
 end
 
+-- Food owned by `team` still sitting on its counter / roof (for raiders):
+-- position and whether it's on a roof.
+function FoodService.available(team: string): { { position: Vector3, onRoof: boolean } }
+	local list = {}
+	for _, item in items do
+		if item.food.owner == team and item.food.status == "Pantry" then
+			table.insert(list, { position = item.slot, onRoof = item.onRoof })
+		end
+	end
+	return list
+end
+
 -- Positions of food `team` dropped on the field (for bots to recover).
 function FoodService.droppedBy(team: string): { Vector3 }
 	local list = {}
@@ -292,20 +306,43 @@ function FoodService.start()
 	folder.Name = "Food"
 	folder.Parent = Workspace
 
+	local layoutOk, layoutErr = FoodLayout.validate(Config.FoodLayout, Config.FoodTypes)
+	assert(layoutOk, "Config.FoodLayout: " .. tostring(layoutErr))
+
 	for _, t in Config.Teams do
-		local pantry = MapService.kitchen(t.id).pantry
-		local offsets = Reach.slotOffsets(#Config.FoodTypes * Config.PantrySlotsPerType)
-		local index = 0
-		for _, foodType in Config.FoodTypes do
-			for _ = 1, Config.PantrySlotsPerType do
-				index += 1
-				local o = offsets[index]
+		local kitchen = MapService.kitchen(t.id)
+		local slots = FoodLayout.slots(Config.FoodLayout, t.id)
+		-- Counter positions: base foods first, then any roof food whose
+		-- pedestal is missing from the map (fallback).
+		local onCounter: { FoodLayout.Slot } = {}
+		local placed: { { slot: FoodLayout.Slot, pos: Vector3?, roof: boolean } } = {}
+		for _, s in slots do
+			local roofPos = if s.kind == "roof" then kitchen.roofFood[s.index] else nil
+			if roofPos then
+				table.insert(placed, { slot = s, pos = roofPos + Vector3.new(0, 1, 0), roof = true })
+			else
+				table.insert(onCounter, s)
+			end
+		end
+		local offsets = Reach.slotOffsets(#onCounter)
+		for i, s in onCounter do
+			local o = offsets[i]
+			table.insert(placed, { slot = s, pos = kitchen.pantry + Vector3.new(o.X, o.Y, o.Z), roof = false })
+		end
+		for _, p in placed do
+			for copy = 1, Config.PantrySlotsPerType do
+				local foodType = p.slot.foodType
 				local item: Item = {
 					food = FoodState.new(t.id, foodType),
 					part = buildFood(foodType),
 					rot = looks[foodType].root.offset,
-					slot = pantry + Vector3.new(o.X, o.Y, o.Z),
+					-- Extra copies (PantrySlotsPerType > 1) stand side by side, not stacked.
+					slot = (p.pos :: Vector3) + Vector3.new(0, 0, (copy - 1) * 1.2),
+					onRoof = p.roof,
 				}
+				-- Clients use these for the food beacon and markers.
+				item.part:SetAttribute("Owner", t.id)
+				item.part:SetAttribute("OnRoof", p.roof)
 				showInPantry(item)
 				table.insert(items, item)
 			end
