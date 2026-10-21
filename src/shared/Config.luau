@@ -6,9 +6,21 @@ local Config = {}
 
 -- Teams ---------------------------------------------------------------------
 Config.Teams = {
-	{ id = "Red", displayName = "Red Kitchen", color = "Bright red" },
-	{ id = "Blue", displayName = "Blue Kitchen", color = "Bright blue" },
+	-- id: internal key (markers, attributes); displayName: what players see
+	-- (Jim 2026-10-20: named after the bases).
+	{ id = "Red", displayName = "Pizza Palace", color = "Bright red" },
+	{ id = "Blue", displayName = "Taco Town", color = "Bright blue" },
 }
+
+-- Player-facing name for a team id ("Red" -> "Pizza Palace").
+function Config.teamName(id: string): string
+	for _, t in Config.Teams do
+		if t.id == id then
+			return t.displayName
+		end
+	end
+	return id
+end
 Config.MinPlayersPerTeam = 4 -- bots fill up to this
 Config.MaxPlayersPerTeam = 8
 Config.MinHumansToStart = 2
@@ -157,7 +169,7 @@ Config.Pads = {
 	radius = 4, -- horizontal studs from the pad centre
 	dashMultiplier = 1.6,
 	dashSeconds = 2,
-	jumpVelocity = 105, -- studs/s up: apex ≈ 105²/(2·196.2) ≈ 28 studs, clears the 25-stud Apartments roof
+	jumpVelocity = 105, -- studs/s up: apex ≈ 105²/(2·196.2) ≈ 28 studs, clears the tallest roof by a pad (Bank, 18)
 	cooldownSeconds = 1.5, -- per actor per pad
 }
 Config.DropoffRadius = 6

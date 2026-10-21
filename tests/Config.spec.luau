@@ -35,9 +35,15 @@ return function(t)
 		t.truthy(#Config.Characters * Config.MaxSameCharacterPerTeam >= Config.MaxPlayersPerTeam)
 	end)
 
-	t.test("jump pads clear the tallest roof beside a pad (Apartments parapet 25.2)", function()
+	t.test("team display names match the bases (Jim 2026-10-20)", function()
+		t.eq(Config.teamName("Red"), "Pizza Palace")
+		t.eq(Config.teamName("Blue"), "Taco Town")
+		t.eq(Config.teamName("Green"), "Green") -- unknown id falls back to itself
+	end)
+
+	t.test("jump pads clear the tallest roof beside a pad (Bank parapet 19.2)", function()
 		local g = 196.2 -- Workspace.Gravity default
 		local apex = Config.Pads.jumpVelocity ^ 2 / (2 * g)
-		t.truthy(apex >= 25.2 + 1, "apex " .. apex)
+		t.truthy(apex >= 19.2 + 1, "apex " .. apex)
 	end)
 end

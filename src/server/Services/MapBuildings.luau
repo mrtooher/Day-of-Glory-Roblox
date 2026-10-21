@@ -672,7 +672,7 @@ local function apartmentExtras(f: Instance, bcf: CFrame, b: Spec)
 		end
 	end
 	-- Rooftop water tower.
-	local wx, wz = 6, 5
+	local wx, wz = -7, 6 -- west half: the east half holds the rooftop food stand
 	for _, sx in { -1, 1 } do
 		for _, sz in { -1, 1 } do
 			solid(f, "TowerLeg", V(0.5, 5, 0.5), L(wx + sx * 2.2, h + 2.5, wz + sz * 2.2), C(70, 60, 50), M.Metal)
@@ -685,8 +685,8 @@ local function apartmentExtras(f: Instance, bcf: CFrame, b: Spec)
 	vcyl(f, "TankRoof", 0.8, 4.2, L(wx, h + 12.2, wz), C(70, 70, 75), M.Metal)
 	vcyl(f, "TankRoof", 0.6, 1.6, L(wx, h + 12.9, wz), C(70, 70, 75), M.Metal)
 	-- TV antenna and AC unit.
-	deco(f, "Antenna", V(0.2, 5, 0.2), L(-8, h + 2.5, 8), C(80, 80, 85), M.Metal)
-	deco(f, "AntennaBar", V(3, 0.2, 0.2), L(-8, h + 4.2, 8), C(80, 80, 85), M.Metal)
+	deco(f, "Antenna", V(0.2, 5, 0.2), L(9, h + 2.5, -9), C(80, 80, 85), M.Metal)
+	deco(f, "AntennaBar", V(3, 0.2, 0.2), L(9, h + 4.2, -9), C(80, 80, 85), M.Metal)
 	solid(f, "ACUnit", V(3, 2, 3), L(-6, h + 1, -6), C(190, 190, 195), M.Metal)
 	vcyl(f, "ACFan", 0.2, 2.2, L(-6, h + 2.05, -6), C(60, 60, 65), M.Metal)
 	pottedPlant(f, (L(-4.5, 0.4, -16.6)).Position, C(255, 210, 60))
@@ -843,18 +843,18 @@ local BUILDINGS: { Spec } = {
 		font = Enum.Font.FredokaOne, sideRows = { 4.5 }, extras = cafeExtras,
 	},
 	{
-		name = "Apartments", x = 120, z = 50, w = 30, d = 30, h = 24,
+		name = "Apartments", x = 120, z = 50, w = 30, d = 30, h = 13,
 		wall = C(175, 85, 65), wallMat = M.Brick, trim = C(245, 245, 240), door = C(40, 70, 130),
 		sign = "SUNNY APTS", signW = 12, signBg = C(255, 210, 60), signFg = C(40, 70, 130), signStroke = WHITE,
-		frontRows = { 13, 17, 21 }, sideRows = { 4.5, 10.5, 14.5, 18.5 }, sideGap = { 1, -14.2, -8.8 }, extras = apartmentExtras,
+		frontRows = {}, sideRows = { 4.5, 10.5 }, sideGap = { 1, 4.6, 9.6 }, extras = apartmentExtras,
 	},
 	{
-		name = "BurgerJoint", x = -120, z = -50, w = 30, d = 30, h = 10,
+		name = "BurgerJoint", x = -120, z = -50, w = 30, d = 30, h = 13,
 		wall = C(255, 205, 70), wallMat = M.Plaster, trim = C(220, 40, 40), door = C(220, 40, 40),
 		awning = { C(220, 40, 40), WHITE },
-		sign = "BURGER JOINT", signY = 13, signU = -4, signW = 18, signBg = C(220, 40, 40), signFg = C(255, 230, 80),
+		sign = "BURGER JOINT", signU = -4, signW = 18, signBg = C(220, 40, 40), signFg = C(255, 230, 80),
 		signStroke = C(110, 20, 10), signBorder = C(255, 220, 60), font = Enum.Font.FredokaOne,
-		sideGap = { 1, 0.2, 5.2 }, sideRows = { 4.5 }, extras = burgerExtras,
+		sideGap = { 1, 4.6, 9.6 }, sideRows = { 4.5 }, extras = burgerExtras,
 	},
 	{
 		name = "Police", x = -70, z = -50, w = 30, d = 30, h = 15,
@@ -870,10 +870,10 @@ local BUILDINGS: { Spec } = {
 		font = Enum.Font.FredokaOne, sideRows = { 4.5 }, extras = shopExtras,
 	},
 	{
-		name = "Arcade", x = 120, z = -50, w = 30, d = 30, h = 16,
+		name = "Arcade", x = 120, z = -50, w = 30, d = 30, h = 13,
 		wall = C(70, 35, 110), wallMat = M.SmoothPlastic, trim = C(255, 60, 200), trimMat = M.Neon, door = C(30, 20, 50),
 		sign = "ARCADE", signBg = C(20, 10, 40), signFg = C(90, 255, 255), signStroke = C(10, 0, 40), signBorder = C(0, 230, 255),
-		font = Enum.Font.FredokaOne, frontRows = { 13.7 }, sideRows = { 4.5, 10.5 }, sideGap = { -1, 8, 13 }, extras = arcadeExtras,
+		font = Enum.Font.FredokaOne, sideRows = { 4.5, 10.5 }, sideGap = { -1, 4.6, 9.6 }, extras = arcadeExtras,
 	},
 }
 
@@ -1543,51 +1543,32 @@ local function buildRooftopFood(root: Instance)
 	local redSteps = { C(195, 70, 55), C(225, 110, 85) }
 	local blueSteps = { C(55, 105, 195), C(90, 140, 225) }
 
-	-- Red 1: Sushi Bar (x -135..-105, z 35..65, roof 13). Stairs up the west
-	-- wall from the corner plaza, 9 rises of 1.44, landing at z 54.6..59.6.
+	-- All four roofs are 13 high (Jim 2026-10-20: same height for both teams)
+	-- and Blue's layout is Red's mirrored across x = 0: a straight flight of
+	-- 9 rises (1.44 each) up the wall facing the team's plaza, a landing at
+	-- |z| 54.6..59.6 (parapet gap where there is a parapet), and the stand at
+	-- (±127, ±57).
+	local ROOF = 13
+
+	-- Red 1: Sushi Bar (x -135..-105, z 35..65). Stairs up the west wall.
 	local s1 = newFolder(f, "RedSushiStairs")
-	straightRoofStair(s1, "RedRoofStair1Step", -140, -135, -1, 37, 1, 13, 9, 2.2, redSteps, red)
-	roofFoodStand(f, "RedRoofFood1", -127, 57, 13, red, V(1, 0, 0))
+	straightRoofStair(s1, "RedRoofStair1Step", -140, -135, -1, 37, 1, ROOF, 9, 2.2, redSteps, red)
+	roofFoodStand(f, "RedRoofFood1", -127, 57, ROOF, red, V(1, 0, 0))
 
-	-- Red 2: Burger Joint (x -135..-105, z -65..-35, roof 10). Stairs up the
-	-- west wall, 7 rises of 1.43, landing at z -50.2..-55.2 (parapet gap).
+	-- Red 2: Burger Joint (x -135..-105, z -65..-35). Stairs up the west wall.
 	local s2 = newFolder(f, "RedBurgerStairs")
-	straightRoofStair(s2, "RedRoofStair2Step", -140, -135, -1, -37, -1, 10, 7, 2.2, redSteps, red)
-	roofFoodStand(f, "RedRoofFood2", -127, -53, 10, red, V(1, 0, 0))
+	straightRoofStair(s2, "RedRoofStair2Step", -140, -135, -1, -37, -1, ROOF, 9, 2.2, redSteps, red)
+	roofFoodStand(f, "RedRoofFood2", -127, -57, ROOF, red, V(1, 0, 0))
 
-	-- Blue 1: Sunny Apts (x 105..135, z 35..65, roof 24). U-shaped switchback
-	-- on the plaza (east) side, 16 rises of 1.5: flight 1 north in lane
-	-- x 140..145, landing across both lanes, flight 2 south in lane x 135..140,
-	-- top landing at z 36..41.2 against the wall (parapet gap).
+	-- Blue 1: Sunny Apts (x 105..135, z 35..65). Stairs up the east wall.
 	local s3 = newFolder(f, "BlueApartmentStairs")
-	local p3 = "BlueRoofStair1Step"
-	local rise3 = 1.5
-	for i = 1, 7 do
-		local za = 37 + (i - 1) * 3
-		stairBlock(s3, p3 .. i, 140, 145, za, za + 3, i * rise3, blueSteps[i % 2 + 1], za)
-	end
-	stairBlock(s3, p3 .. 8, 135, 145, 58, 63, 8 * rise3, blueSteps[1], 58)
-	for i = 9, 15 do
-		local za = 58 - (i - 9) * 2.4
-		stairBlock(s3, p3 .. i, 135, 140, za, za - 2.4, i * rise3, blueSteps[i % 2 + 1], za)
-	end
-	stairBlock(s3, p3 .. 16, 135, 140, 41.2, 36, 24, blueSteps[1], 41.2)
-	railZ(s3, 144.8, 38.5, rise3 + 3, 56.5, 7 * rise3 + 3)
-	railZ(s3, 144.8, 58, 15, 62.8, 15)
-	railX(s3, 62.8, 135, 145, 15)
-	railZ(s3, 140, 56.8, 9 * rise3 + 3, 42.4, 15 * rise3 + 3)
-	railZ(s3, 140, 41.2, 27, 36.2, 27)
-	railX(s3, 36.2, 135, 140, 27)
-	landingLamp(s3, 144.8, 62.8, 12, blue)
-	landingLamp(s3, 139.8, 36.2, 24, blue)
-	stairSign(s3, 147.6, 36.6, -1, blue)
-	roofFoodStand(f, "BlueRoofFood1", 127, 39, 24, blue, V(-1, 0, 0))
+	straightRoofStair(s3, "BlueRoofStair1Step", 135, 140, 1, 37, 1, ROOF, 9, 2.2, blueSteps, blue)
+	roofFoodStand(f, "BlueRoofFood1", 127, 57, ROOF, blue, V(-1, 0, 0))
 
-	-- Blue 2: Arcade (x 105..135, z -65..-35, roof 16). Stairs up the east
-	-- wall from the plaza, 11 rises of 1.45, landing at z -58..-63 (parapet gap).
+	-- Blue 2: Arcade (x 105..135, z -65..-35). Stairs up the east wall.
 	local s4 = newFolder(f, "BlueArcadeStairs")
-	straightRoofStair(s4, "BlueRoofStair2Step", 135, 140, 1, -36, -1, 16, 11, 2.2, blueSteps, blue)
-	roofFoodStand(f, "BlueRoofFood2", 127, -60, 16, blue, V(-1, 0, 0))
+	straightRoofStair(s4, "BlueRoofStair2Step", 135, 140, 1, -37, -1, ROOF, 9, 2.2, blueSteps, blue)
+	roofFoodStand(f, "BlueRoofFood2", 127, -57, ROOF, blue, V(-1, 0, 0))
 end
 
 -- Arena ---------------------------------------------------------------------------

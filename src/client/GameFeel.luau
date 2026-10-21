@@ -256,8 +256,8 @@ function GameFeel.start()
 				if k and k.dropoff then
 					confetti(k.dropoff.Position)
 				end
-				local mine = player.Team ~= nil and player.Team.Name == t.id
-				bigText(gui, if mine then "+1  NICE DELIVERY!" else string.upper(t.id) .. " SCORED!", teamColor(t.id), 1.6)
+				local mine = player.Team ~= nil and player.Team:GetAttribute("TeamId") == t.id
+				bigText(gui, if mine then "+1  NICE DELIVERY!" else string.upper(t.displayName) .. " SCORED!", teamColor(t.id), 1.6)
 			end
 			lastScores[t.id] = v
 		end)
@@ -284,7 +284,7 @@ function GameFeel.start()
 		while true do
 			local character = player.Character
 			local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
-			local myTeam = if player.Team then player.Team.Name else nil
+			local myTeam = if player.Team then player.Team:GetAttribute("TeamId") :: string? else nil
 			local nearest = math.huge
 			if root and myTeam and state:GetAttribute("Phase") == "Playing" and character:GetAttribute("Carrying") ~= true then
 				for _, p in foodFolder:GetChildren() do
@@ -321,7 +321,7 @@ function GameFeel.start()
 			lastPhase = phase
 		end
 		local playing = phase == "Playing"
-		local myTeam = if player.Team then player.Team.Name else nil
+		local myTeam = if player.Team then player.Team:GetAttribute("TeamId") :: string? else nil
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 
@@ -331,7 +331,7 @@ function GameFeel.start()
 			if label and k.pantry then
 				local dist = if root then math.floor((root.Position - k.pantry.Position).Magnitude) else 0
 				if myTeam == nil then
-					label.Text = string.upper(teamId) .. " KITCHEN"
+					label.Text = string.upper(Config.teamName(teamId))
 					label.TextColor3 = teamColor(teamId)
 				elseif teamId == myTeam then
 					label.Text = "DEFEND"

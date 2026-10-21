@@ -123,7 +123,7 @@ function Hud.start()
 		local goal = state:GetAttribute("PointsToWin") or Config.PointsToWin
 		for _, t in Config.Teams do
 			local score = state:GetAttribute("Score_" .. t.id) or 0
-			teamLabels[t.id].Text = string.format("%s %d/%d", string.upper(t.id), score, goal)
+			teamLabels[t.id].Text = string.format("%s %d/%d", string.upper(t.displayName), score, goal)
 		end
 
 		local p = state:GetAttribute("Phase") or "Waiting"
@@ -132,7 +132,7 @@ function Hud.start()
 		clock.Text = if endsAt > 0 then formatTime(left) else "--:--"
 		if p == "PostMatch" then
 			local winner = state:GetAttribute("Winner")
-			phase.Text = if winner == "Draw" then "Draw!" else tostring(winner) .. " wins!"
+			phase.Text = if winner == "Draw" then "Draw!" else Config.teamName(tostring(winner)) .. " wins!"
 		else
 			phase.Text = phaseText[p] or p
 		end

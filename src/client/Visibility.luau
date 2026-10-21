@@ -115,7 +115,7 @@ function Visibility.start()
 	local selfFaded = false
 
 	while true do
-		local myTeam = player.Team and player.Team.Name
+		local myTeam = if player.Team then player.Team:GetAttribute("TeamId") :: string? else nil
 		local revealed = myTeam ~= nil
 			and Workspace:GetServerTimeNow() < (state:GetAttribute("RevealUntil_" .. myTeam) or 0)
 
