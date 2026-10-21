@@ -193,15 +193,17 @@ end
 -- 3b. Rooftop food (Config.FoodLayout.roof): <Team>RoofFood1/2 pedestals on
 -- the roofs of the two buildings nearest each base, each reachable by stairs
 -- <Team>RoofStair<k>Step<n> (bots can't use jump pads).
+-- Jim 2026-10-20: all four rooftop food roofs the same height (fair raids).
+local ROOF_TOP = 13
 local roofSpots = {
 	-- [team] = { { name, x1, x2, z1, z2, roofTop } } (building footprint, roof height)
 	Red = {
-		{ "RedRoofFood1", -135, -105, 35, 65, 13 }, -- Sushi Bar
-		{ "RedRoofFood2", -135, -105, -65, -35, 10 }, -- Burger Joint
+		{ "RedRoofFood1", -135, -105, 35, 65, ROOF_TOP }, -- Sushi Bar
+		{ "RedRoofFood2", -135, -105, -65, -35, ROOF_TOP }, -- Burger Joint
 	},
 	Blue = {
-		{ "BlueRoofFood1", 105, 135, 35, 65, 24 }, -- Sunny Apts
-		{ "BlueRoofFood2", 105, 135, -65, -35, 16 }, -- Arcade
+		{ "BlueRoofFood1", 105, 135, 35, 65, ROOF_TOP }, -- Sunny Apts
+		{ "BlueRoofFood2", 105, 135, -65, -35, ROOF_TOP }, -- Arcade
 	},
 }
 local MAX_RISE = 1.6
@@ -281,6 +283,28 @@ for team, spots in roofSpots do
 			check(#entry == 0, team .. "RoofStair" .. k .. " opens onto the roof, blocked by: " .. table.concat(entry, ", "))
 		end
 	end
+end
+
+-- 3c. Fairness: Blue's rooftop food is Red's mirrored across the centre line
+-- (same stand spot with x flipped, same number of stair steps).
+for k = 1, 2 do
+	local r, b = find("RedRoofFood" .. k), find("BlueRoofFood" .. k)
+	if r and b then
+		local rp, bp = position(r), position(b)
+		check(math.abs(rp.X + bp.X) < 0.1 and math.abs(rp.Z - bp.Z) < 0.1 and math.abs(rp.Y - bp.Y) < 0.1,
+			string.format("RoofFood%d mirrored: Red %s vs Blue %s", k, tostring(rp), tostring(bp)))
+	else
+		check(false, "RoofFood" .. k .. " exists for both teams")
+	end
+	local function stepCount(team: string): number
+		local n = 0
+		while find(team .. "RoofStair" .. k .. "Step" .. (n + 1)) do
+			n += 1
+		end
+		return n
+	end
+	local rn, bn = stepCount("Red"), stepCount("Blue")
+	check(rn == bn, string.format("RoofStair%d same step count (Red %d, Blue %d)", k, rn, bn))
 end
 
 -- 4. Pads -------------------------------------------------------------------

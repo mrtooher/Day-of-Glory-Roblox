@@ -157,7 +157,7 @@ Config.Pads = {
 	radius = 4, -- horizontal studs from the pad centre
 	dashMultiplier = 1.6,
 	dashSeconds = 2,
-	jumpVelocity = 105, -- studs/s up: apex ≈ 105²/(2·196.2) ≈ 28 studs, clears the 25-stud Apartments roof
+	jumpVelocity = 105, -- studs/s up: apex ≈ 105²/(2·196.2) ≈ 28 studs, clears the tallest roof by a pad (Bank, 18)
 	cooldownSeconds = 1.5, -- per actor per pad
 }
 Config.DropoffRadius = 6
