@@ -6,9 +6,21 @@ local Config = {}
 
 -- Teams ---------------------------------------------------------------------
 Config.Teams = {
-	{ id = "Red", displayName = "Red Kitchen", color = "Bright red" },
-	{ id = "Blue", displayName = "Blue Kitchen", color = "Bright blue" },
+	-- id: internal key (markers, attributes); displayName: what players see
+	-- (Jim 2026-10-20: named after the bases).
+	{ id = "Red", displayName = "Pizza Palace", color = "Bright red" },
+	{ id = "Blue", displayName = "Taco Town", color = "Bright blue" },
 }
+
+-- Player-facing name for a team id ("Red" -> "Pizza Palace").
+function Config.teamName(id: string): string
+	for _, t in Config.Teams do
+		if t.id == id then
+			return t.displayName
+		end
+	end
+	return id
+end
 Config.MinPlayersPerTeam = 4 -- bots fill up to this
 Config.MaxPlayersPerTeam = 8
 Config.MinHumansToStart = 2

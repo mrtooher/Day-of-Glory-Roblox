@@ -50,8 +50,9 @@ end
 
 function MatchService.teamOfPlayer(player: Player): string?
 	local team = player.Team
-	if team and teamObjects[team.Name] == team then
-		return team.Name
+	local id = if team then team:GetAttribute("TeamId") else nil
+	if type(id) == "string" and teamObjects[id] == team then
+		return id
 	end
 	return nil
 end
@@ -118,7 +119,7 @@ local function endMatch()
 	})
 	local winner = result.winner
 	Remotes.setState("Winner", winner or "Draw")
-	Remotes.announce(if winner then winner .. " Kitchen wins!" else "It's a draw!")
+	Remotes.announce(if winner then Config.teamName(winner) .. " wins!" else "It's a draw!")
 	services.FoodService.resetAll()
 end
 
@@ -192,7 +193,8 @@ end
 function MatchService.start()
 	for _, t in Config.Teams do
 		local team = Instance.new("Team")
-		team.Name = t.id
+		team.Name = t.displayName -- shown in the player list
+		team:SetAttribute("TeamId", t.id) -- internal id; clients read this
 		team.TeamColor = BrickColor.new(t.color :: any)
 		team.AutoAssignable = false
 		team.Parent = Teams
