@@ -31,11 +31,32 @@ Checks: Stage 3 fable-checks code.md → "Red, then green", "Test suite actually
 | 8 | 3 | `lune run tools/arena-check/run.luau` | PASS | `ARENA CHECK: 100 passed, 0 failed` |
 | 9 | 3 | `git diff --stat` | PASS | `src/shared/Config.luau | 25 +++++++++++++------------` (only planned file) |
 | 10 | 2 | Studio command bar: load each id as Sound, print IsLoaded + TimeLength; grep `[SFXCHECK]` in Studio log | PASS | 12/12 `true`; lengths match generated .ogg per name (e.g. `beacon ... true 0.14`, `SlowMo ... true 0.82`, `Sniff ... true 0.41`) |
+| 11 | 4 | `gh api -X PUT .../pulls/16/merge` | PASS | `true` / `ddaa4f5d82d954c8e4772363e8e3d0af005d4682` |
+| 12 | 4 | `lune run tests/run.luau` on merged main | PASS | `TOTAL: 136 passed, 0 failed` |
+| 13 | 5 | `rojo build` main → `~/Downloads/DayOfGlory-main.rbxl` (old copy kept as `DayOfGlory-main-oct20-backup.rbxl`); `cmp` live vs main | PASS | `SAME` |
+| 14 | 5 | Studio command bar on opened place: print Config sfx + team name | PASS | `[BUILDCHECK] 104319939845966 135704714670908 Pizza Palace` |
+| 15 | 5 | Playtest (Play), grep Studio log for game script errors (`Script '`, `attempt to`) | PASS | only Studio plugin noise (`MaterialManager... RobloxReactProfiling`), no game script; screen shows `Waiting for players`, `PIZZA PALACE 0/10`, `TACO TOWN 0/10`, bots spawned; Jim: "looks like it's working" |
+| 16 | 6 | File → Publish to Roblox As → "Create new experience" | UNVERIFIABLE | dialog locked to Claude (other process); Jim chose new experience (not overwrite public "Nuggetdog447's…") and fills it in |
+| 17 | 6 | Studio command bar on published place: GameId/PlaceId/Creator + sfx | PASS | `[PUBCHECK] 10772349564 110189125329460 11318593482 Enum.CreatorType.User 135704714670908` (creator = playtest player id → own audio usable) |
+| 18 | 6 | File → Publish to Roblox (after lighting auto-migration), Studio log | PASS | `Published new changes in "Day of Glory Roblox Arena Battle" to Roblox.` (`v3`) |
+| 19 | 6 | Creator Hub configure page in built-in browser | UNVERIFIABLE | redirected to `Log in to Roblox` — browser pane not signed in; Jim signs in (Claude can't enter passwords) |
+| 20 | 6 | Creator Hub place Access page: set Maximum Visitor Count 16, Save, reload, read `input[name=maxPlayerCount]` | PASS | before `"50"`, after reload `"16"` |
+| 21 | 6 | Creator Hub Manage audience page text | PASS | `Day of Glory Roblox Arena Battle is ready to test! Only available to you and your collaborators.` · `Release publicly on Roblox … Continue` · questionnaire `Incomplete` |
 
 ## Double-check
 
-(pending)
+```
+Double-check: 18 claims + 1 requirement.
+PASS: 18 (C1–C9 mechanical; R1, C1–C5 requirements). FIXED after FAIL: 0. UNVERIFIABLE: 1 (Creator Hub state — checkers can't reach Roblox; covered by rows 17–21 from Studio log + Creator Hub page reads).
+Checkers: 1× Haiku (mechanical, incl. mutation test beacon=0 → FAIL as expected), 1× Sonnet (requirements), 0 re-check rounds
+```
+
+- No fixes needed. Notes: Pizza Man's power shows in-game as "PIZZA KNIFE" (id `PizzaToss`); beacon comment "0 = built-in tick" still true of code, but test now forbids 0.
 
 ## Open items
 
-(pending)
+- Jim: complete content rating (Maturity) questionnaire — answers are his attestation.
+- Jim: Manage audience → "Release publicly on Roblox" → Continue (public release is his click).
+- Under-16 reach (Roblox page, Oct 22): ID verification, 2-step verification, 250 highly engaged players, refundable 1,000 Robux Kids & Select fee.
+- Match start sounds (countdown/score) not heard live: playtest had 1 human; match needs 2 (`MinHumansToStart = 2`). Ids load (row 10); first 2-player match will exercise them.
+- "PIZZA KNIFE" name may matter for all-ages questionnaire (from handoff; unconfirmed).
