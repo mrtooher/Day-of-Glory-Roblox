@@ -41,6 +41,17 @@ return function(t)
 		t.eq(Config.teamName("Green"), "Green") -- unknown id falls back to itself
 	end)
 
+	t.test("every sound effect has an uploaded asset id (Jim 2026-10-21)", function()
+		local needed = { "score", "countdownBeep", "countdownGo", "beacon" }
+		for id in Config.Powers do
+			table.insert(needed, id)
+		end
+		for _, name in needed do
+			local v = Config.Audio.sfx[name]
+			t.truthy(type(v) == "number" and v > 0, "sfx." .. name .. " = " .. tostring(v))
+		end
+	end)
+
 	t.test("jump pads clear the tallest roof beside a pad (Bank parapet 19.2)", function()
 		local g = 196.2 -- Workspace.Gravity default
 		local apex = Config.Pads.jumpVelocity ^ 2 / (2 * g)
