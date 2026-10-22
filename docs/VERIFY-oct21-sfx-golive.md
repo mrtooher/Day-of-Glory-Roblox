@@ -31,6 +31,12 @@ Checks: Stage 3 fable-checks code.md → "Red, then green", "Test suite actually
 | 8 | 3 | `lune run tools/arena-check/run.luau` | PASS | `ARENA CHECK: 100 passed, 0 failed` |
 | 9 | 3 | `git diff --stat` | PASS | `src/shared/Config.luau | 25 +++++++++++++------------` (only planned file) |
 | 10 | 2 | Studio command bar: load each id as Sound, print IsLoaded + TimeLength; grep `[SFXCHECK]` in Studio log | PASS | 12/12 `true`; lengths match generated .ogg per name (e.g. `beacon ... true 0.14`, `SlowMo ... true 0.82`, `Sniff ... true 0.41`) |
+| 11 | 4 | `gh api -X PUT .../pulls/16/merge` | PASS | `true` / `ddaa4f5d82d954c8e4772363e8e3d0af005d4682` |
+| 12 | 4 | `lune run tests/run.luau` on merged main | PASS | `TOTAL: 136 passed, 0 failed` |
+| 13 | 5 | `rojo build` main → `~/Downloads/DayOfGlory-main.rbxl` (old copy kept as `DayOfGlory-main-oct20-backup.rbxl`); `cmp` live vs main | PASS | `SAME` |
+| 14 | 5 | Studio command bar on opened place: print Config sfx + team name | PASS | `[BUILDCHECK] 104319939845966 135704714670908 Pizza Palace` |
+| 15 | 5 | Playtest (Play), grep Studio log for game script errors (`Script '`, `attempt to`) | PASS | only Studio plugin noise (`MaterialManager... RobloxReactProfiling`), no game script; screen shows `Waiting for players`, `PIZZA PALACE 0/10`, `TACO TOWN 0/10`, bots spawned; Jim: "looks like it's working" |
+| 16 | 6 | File → Publish to Roblox As → "Create new experience" | UNVERIFIABLE | dialog locked to Claude (other process); Jim chose new experience (not overwrite public "Nuggetdog447's…") and fills it in |
 
 ## Double-check
 
