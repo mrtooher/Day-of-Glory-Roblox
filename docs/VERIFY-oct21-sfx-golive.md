@@ -26,6 +26,11 @@ Checks: Stage 3 fable-checks code.md → "Red, then green", "Test suite actually
 | 3 | 3 | `lune run tools/arena-check/run.luau` (baseline) | PASS | `ARENA CHECK: 100 passed, 0 failed` |
 | 4 | 3 | new sfx-id test before wiring (red) | FAIL (expected) | `sfx.score = 0: expected truthy, got false` / `TOTAL: 135 passed, 1 failed` |
 | 5 | 2 | Studio Asset Manager → Import → Open panel | UNVERIFIABLE | Open/Save panel blocked for Claude ("belongs to a different process"); Jim picks files |
+| 6 | 2 | Jim picked files; Asset Manager list zoomed, all 12 rows read | PASS | `beacon 135704714670908 Audio` … `PizzaToss 82751620473287 Audio`; known music ids `89048811438062`/`140350912499061` read correctly (OCR sanity) |
+| 7 | 3 | `lune run tests/run.luau` after wiring (green) | PASS | `TOTAL: 136 passed, 0 failed` |
+| 8 | 3 | `lune run tools/arena-check/run.luau` | PASS | `ARENA CHECK: 100 passed, 0 failed` |
+| 9 | 3 | `git diff --stat` | PASS | `src/shared/Config.luau | 25 +++++++++++++------------` (only planned file) |
+| 10 | 2 | Studio command bar: load each id as Sound, print IsLoaded + TimeLength; grep `[SFXCHECK]` in Studio log | PASS | 12/12 `true`; lengths match generated .ogg per name (e.g. `beacon ... true 0.14`, `SlowMo ... true 0.82`, `Sniff ... true 0.41`) |
 
 ## Double-check
 

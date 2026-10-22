@@ -202,20 +202,21 @@ Config.Audio = {
 	},
 	loadTimeoutSeconds = 10, -- skip a song that hasn't loaded by then
 	winMusic = 0, -- PostMatch; 0 = silence after the match
+	-- SFX: original synth sounds uploaded by Nuggetdog447 2026-10-21 (DayOfGlory-SFX)
 	sfx = {
-		score = 0,
-		countdownBeep = 0, -- last seconds of the pre-match countdown
-		countdownGo = 0, -- match start
-		beacon = 0, -- near-food ping; 0 = built-in tick (Config.Beacon.builtinSound)
+		score = 104319939845966,
+		countdownBeep = 88261243911726, -- last seconds of the pre-match countdown
+		countdownGo = 92653538543755, -- match start
+		beacon = 135704714670908, -- near-food ping (pitch-shifted in GameFeel); 0 = built-in tick
 		-- one per power, played when that power is used (keys = Config.Powers ids)
-		Yell = 0,
-		Fireball = 0,
-		Vanish = 0,
-		SlowMo = 0,
-		Whistle = 0,
-		Sniff = 0,
-		PizzaToss = 0,
-		GreaseSpill = 0,
+		Yell = 74454215440980,
+		Fireball = 112995250124903,
+		Vanish = 74496440932830,
+		SlowMo = 94335486841614,
+		Whistle = 111746266657825,
+		Sniff = 119641056144633,
+		PizzaToss = 82751620473287,
+		GreaseSpill = 79711271195171,
 	},
 	countdownBeepSeconds = 3,
 }
