@@ -37,6 +37,9 @@ Checks: Stage 3 fable-checks code.md → "Red, then green", "Test suite actually
 | 14 | 5 | Studio command bar on opened place: print Config sfx + team name | PASS | `[BUILDCHECK] 104319939845966 135704714670908 Pizza Palace` |
 | 15 | 5 | Playtest (Play), grep Studio log for game script errors (`Script '`, `attempt to`) | PASS | only Studio plugin noise (`MaterialManager... RobloxReactProfiling`), no game script; screen shows `Waiting for players`, `PIZZA PALACE 0/10`, `TACO TOWN 0/10`, bots spawned; Jim: "looks like it's working" |
 | 16 | 6 | File → Publish to Roblox As → "Create new experience" | UNVERIFIABLE | dialog locked to Claude (other process); Jim chose new experience (not overwrite public "Nuggetdog447's…") and fills it in |
+| 17 | 6 | Studio command bar on published place: GameId/PlaceId/Creator + sfx | PASS | `[PUBCHECK] 10772349564 110189125329460 11318593482 Enum.CreatorType.User 135704714670908` (creator = playtest player id → own audio usable) |
+| 18 | 6 | File → Publish to Roblox (after lighting auto-migration), Studio log | PASS | `Published new changes in "Day of Glory Roblox Arena Battle" to Roblox.` (`v3`) |
+| 19 | 6 | Creator Hub configure page in built-in browser | UNVERIFIABLE | redirected to `Log in to Roblox` — browser pane not signed in; Jim signs in (Claude can't enter passwords) |
 
 ## Double-check
 
