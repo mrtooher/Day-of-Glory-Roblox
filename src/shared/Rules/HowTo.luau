@@ -22,7 +22,7 @@ function HowTo.lines(config: HowToConfig): { string }
 		"3. Carry it to YOUR kitchen - follow the glowing beam home.",
 		string.format("4. First team to %d food wins!", config.PointsToWin),
 		"5. On YOUR side, touch enemy raiders to tag them - they drop the food.",
-		string.format("POWER: tap the big yellow button (or press %s).", config.PowerKeys[1]),
+		string.format("POWER: when the match starts, tap your power button (bottom right) or press %s.", config.PowerKeys[1]),
 	}
 end
 
