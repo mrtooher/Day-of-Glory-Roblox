@@ -88,7 +88,7 @@ local function playTrack(id: number, name: string)
 		if music.IsLoaded then
 			failedInARow = 0
 			-- Loaded but never started (stuck at 0:00): start it now.
-			if not music.IsPlaying and music.TimePosition == 0 and musicMode ~= "none" then
+			if not music.IsPlaying and music.TimePosition == 0 and musicMode == "playlist" then
 				warn(string.format("[Audio] %s was stuck - starting it again", name))
 				music:Play()
 			end
@@ -211,9 +211,9 @@ function Audio.start()
 	music.SoundGroup = musicGroup
 	music.Parent = SoundService
 	music.Ended:Connect(function()
-		-- Roblox ignores Play() called inside this sound's own Ended event:
-		-- the next song got its SoundId but sat at 0:00, silent (Jim
-		-- 2026-10-22, reproduced in Studio). Start it a moment later instead.
+		-- Starting the next song from inside this Ended event left it silent
+		-- at 0:00 (Jim 2026-10-22; seen in Studio, cause inferred). Start it
+		-- a moment later instead.
 		local endedToken = trackToken
 		task.delay(0.1, function()
 			if musicMode == "playlist" and trackToken == endedToken then
