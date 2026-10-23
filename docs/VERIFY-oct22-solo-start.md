@@ -25,16 +25,34 @@ Stage 3: Apply to live game in Studio (open cloud place, edit Config, solo playt
 | 4 | 1 | `lune run tools/arena-check/run.luau` | PASS | `ARENA CHECK: 100 passed, 0 failed` |
 | 5 | 1 | `rojo build -o dog-solo.rbxl default.project.json` | PASS | `Built project to dog-solo.rbxl` |
 | 6 | 1 | `git diff --stat` vs stage map | PASS | `src/shared/Config.luau 2 +-`, `tests/Rules/MatchPhase.spec.luau 8 ++++++++` |
-| 7 | 1 | `git ls-remote origin fix/solo-start` | PASS | `40fcc22a... refs/heads/fix/solo-start` |
+| 7 | 1 | `git ls-remote origin fix/solo-start` | PASS | `40fcc22a... refs/heads/fix/solo-start` (stale: branch later advanced to the VERIFY commits) |
 | 8 | 2 | `src/shared/Config.luau` Audio.musicPhases | PASS | `musicPhases = { "Intermission", "Playing" }` — no music in Waiting |
-| 9 | 2 | `src/client/Hud.luau` phaseText / `PowerButtons.luau` | PASS | `Waiting = "Waiting for players"`, `button.Text = "WAIT FOR MATCH"` — solo player sees nothing to do |
+| 9 | 2 | `src/client/Hud.luau` phaseText / `PowerButtons.luau` | PASS | `Waiting = "Waiting for players"`, `button.Text = "WAIT FOR MATCH"` — a solo player in Waiting sees only these labels and a `--:--` clock (wording corrected after double-check: original said "sees nothing to do") |
 | 10 | 3 | Studio open of place 110189125329460 (Studio log 20261023T021705Z) | FAIL | `GetPlaceInfoFailure with code 401, message {"errors":[{"code":9002,"subcode":1,"message":"User is not authenticated"}]}` |
+| 11 | 3 | Jim logged in; Studio open of place, command bar `print(... MinHumansToStart ..., game.PlaceId)` | PASS | `[Fix] before: Config.MinHumansToStart = 2 place 110189125329460` |
+| 12 | 3 | Command bar gsub on `Shared.Config.Source` (anchored on `Config%.MinHumansToStart = 2\n`, must match once) | PASS | `[Fix] replaced 1 after: Config.MinHumansToStart = 1` |
+| 13 | 3 | Studio Test (solo, 1 client) → Studio log + client view | PASS | `[Audio] Now playing Neon Horizon (89048811438062)`; HUD shows `9:33` / `Bring food home!` (phase Playing with 1 human) |
+| 14 | 3 | After Stop, edit-mode re-check of Config source | PASS | `[Fix] edit-mode check: Config.MinHumansToStart = 1 false` |
+| 15 | 3 | File → Publish to Roblox, Studio log | PASS | `Place published. Eligible players can now play this place in Roblox.` / `→ Add publish notes to v4` |
+| 16 | 3 | Same Studio log, solo playtest window 02:21:00–02:21:55 | PASS | `[Food] Bot 7 grabbed PIZZA PALACE's burger!` at 02:21:53 — bots only act in Playing, so 1 human reached Playing (logged late, found by double-check) |
 
 ## Double-check
 
-(pending)
+```
+Double-check: 15 claims + 6 requirements.
+PASS: 15 claims, R1–R3 PASS. FIXED after FAIL: 4 seam items in this record (overstated check 9 wording; "Stage 3 will observe it" open item was false; root cause stated as observed when inferred; HUD reading in check 13 not in log). Partial: R4, R5 (see Open items). UNVERIFIABLE: live music on Roblox servers; checks 1-5 by the Sonnet checker (no lune there; Haiku re-ran them: 137/0, 100/0).
+Checkers: 1x Haiku (mechanical, 15/15 CONFIRMED), 1x Sonnet (requirements + seam), 0 re-check rounds (fixes are wording in this file)
+```
+
+- Fixed: check 9 said "solo player sees nothing to do" → now states only the labels shown.
+- Fixed: Open items said the Stage 3 playtest "will observe" the no-music cause → it ran with the fix applied, so pre-fix silence stays inferred.
+- Fixed: Stage-1 commit message states solo joiners "sat on Waiting forever with no music" as fact → recorded here as inference (commit message itself not rewritten).
+- Fixed: check 13's HUD values come from a screenshot, not the log → bot-grab line added as log evidence (row 16).
 
 ## Open items
 
-- Studio signed out (401). Jim must log in before the live game can be edited/published.
-- Live player logs don't contain game script output, so "no music on live server" root cause is inferred from code (Waiting phase has no music), not observed. Stage 3 playtest will observe it.
+- Studio 401 (check 10) resolved: Jim logged in 22:20 ET; checks 11–15 ran after.
+- Root cause of both reports is INFERRED from code, not observed: live player logs have no game script output. If the two people played together, the old 2-player minimum would not have blocked them, and the how-to-play gaps below are the likelier cause.
+- Live music not verified on Roblox servers; only "Neon Horizon" was heard to start (Studio). "Feast for your life" (140350912499061) not exercised this run.
+- How-to-play gaps remain (GameFeel.luau): start hint shows only 12 s (`HINT_SECONDS = 12`); players who join mid-match never get the hint; no on-screen mention of the power key (Q); Intermission (15 s) has no controls/how-to panel.
+- Servers already running v3 keep the 2-player rule until they shut down (Roblox does not hot-swap code).
