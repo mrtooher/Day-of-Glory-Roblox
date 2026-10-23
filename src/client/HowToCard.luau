@@ -95,6 +95,9 @@ function HowToCard.start()
 		line.TextColor3 = if i == #lines then Color3.fromRGB(255, 220, 80) else Color3.new(1, 1, 1)
 		line.Text = text
 		line.Parent = body
+		local cap = Instance.new("UITextSizeConstraint")
+		cap.MaxTextSize = 20 -- keep short lines from growing bigger than the rest
+		cap.Parent = line
 	end
 
 	local openBtn = Instance.new("TextButton")

@@ -21,7 +21,7 @@ function HowTo.lines(config: HowToConfig): { string }
 		"2. Grab their food: on the counter, and on the rooftops (take the stairs).",
 		"3. Carry it to YOUR kitchen - follow the glowing beam home.",
 		string.format("4. First team to %d food wins!", config.PointsToWin),
-		"5. On your side of the field, touch enemy raiders to tag them - they drop the food.",
+		"5. On YOUR side, touch enemy raiders to tag them - they drop the food.",
 		string.format("POWER: tap the big yellow button (or press %s).", config.PowerKeys[1]),
 	}
 end
