@@ -1,4 +1,5 @@
 local MatchPhase = require("../../src/shared/Rules/MatchPhase")
+local Config = require("../../src/shared/Config")
 
 local base = { minHumans = 2, intermissionSeconds = 15, postMatchSeconds = 8 }
 local function input(now, humans, ended)
@@ -13,6 +14,13 @@ local function input(now, humans, ended)
 end
 
 return function(t)
+	t.test("one human alone starts a match vs bots (Jim 2026-10-22)", function()
+		local inp = input(1, 1)
+		inp.minHumans = Config.MinHumansToStart
+		local s = MatchPhase.step(MatchPhase.initial(0), inp)
+		t.eq(s.phase, "Intermission")
+	end)
+
 	t.test("waits until min humans", function()
 		local s = MatchPhase.initial(0)
 		s = MatchPhase.step(s, input(1, 1))
