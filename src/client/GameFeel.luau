@@ -17,6 +17,7 @@ local Config = require(ReplicatedStorage.Shared.Config)
 local Net = require(ReplicatedStorage.Shared.Net)
 local Beacon = require(ReplicatedStorage.Shared.Rules.Beacon)
 local AudioRules = require(ReplicatedStorage.Shared.Rules.AudioRules)
+local HowTo = require(ReplicatedStorage.Shared.Rules.HowTo)
 
 local GameFeel = {}
 
@@ -308,18 +309,15 @@ function GameFeel.start()
 
 	local wasCarrying = false
 	local hintUntil = 0
-	local lastPhase = state:GetAttribute("Phase")
+	-- nil at start so a player who joins mid-match also gets the hint.
+	local lastPhase: string? = nil
 	local rootAttach: Attachment? = nil
 
 	while true do
 		local now = Workspace:GetServerTimeNow()
 		local phase = state:GetAttribute("Phase")
-		if phase ~= lastPhase then
-			if phase == "Playing" then
-				hintUntil = now + HINT_SECONDS
-			end
-			lastPhase = phase
-		end
+		hintUntil = HowTo.hintUntil(lastPhase, phase or "Waiting", now, HINT_SECONDS, hintUntil)
+		lastPhase = phase
 		local playing = phase == "Playing"
 		local myTeam = if player.Team then player.Team:GetAttribute("TeamId") :: string? else nil
 		local character = player.Character
