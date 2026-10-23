@@ -23,7 +23,7 @@ function Config.teamName(id: string): string
 end
 Config.MinPlayersPerTeam = 4 -- bots fill up to this
 Config.MaxPlayersPerTeam = 8
-Config.MinHumansToStart = 2
+Config.MinHumansToStart = 1 -- Jim 2026-10-22: solo players start vs bots (was 2: solo joiners sat on "Waiting", no music)
 
 -- Match ---------------------------------------------------------------------
 Config.PointsToWin = 10
