@@ -78,7 +78,7 @@ Checkers: 1× Haiku (mechanical), 1× Sonnet (requirements + logic), no re-check
 - **Zero votes = keep current arena** (not random). Jim's choice said "most votes wins, tie = random"; zero votes wasn't specified. One-line change in `Shared/Rules/ArenaVote.winner` if he wants random.
 - Vote panel + moved HOW TO PLAY card not checked on a real phone / narrow screen (<~550 px the bottom-left buttons already overlap the power button, pre-existing).
 - Water World look judged from 3 Studio screenshots only: low water planes (top y 0.09) may flicker on some GPUs; prop placement (gulls, dolphins, hammock, pier billboards) and brightness not reviewed by Jim.
-- Bots verified scoring in Water World over one match (Taco Town won 7/?); bot pathing under the 6.2-stud bridge clearance not specifically watched.
+- Bots verified scoring in Water World over one full match (ended "Taco Town wins!"); bot pathing under the 6.2-stud bridge clearance not specifically watched.
 - Live servers started before v11 keep old code (10 points, no vote) until they shut down.
 - HOW TO PLAY card doesn't mention the arena vote (panel is self-labelled).
 - Pre-existing, not touched: "scored for Blue!" announcement uses team id, not "Taco Town"; README step 4 still says a match needs 2 humans.
