@@ -98,7 +98,7 @@ rokit install
 lune run tests/run
 ```
 
-Confirmed working in this repo with Lune 0.10.4: `TOTAL: 111 passed, 0 failed`.
+Confirmed working in this repo with Lune 0.10.4: `TOTAL: 151 passed, 0 failed` (2026-11-04).
 The runner exits non-zero on any failure, when no tests ran, or when a
 `*.spec.luau` file exists but is not listed in `tests/run.luau`.
 
