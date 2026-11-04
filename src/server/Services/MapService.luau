@@ -1,9 +1,12 @@
 --!strict
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local MapBuildings = require(script.Parent.MapBuildings)
+local MapWater = require(script.Parent.MapWater)
+local Remotes = require(script.Parent.Remotes)
 
 export type Kitchen = {
 	pantry: Vector3,
@@ -18,6 +21,32 @@ local MapService = {}
 local kitchens: { [string]: Kitchen } = {}
 local burgerSpawns: { Vector3 } = {}
 local arena: Instance
+
+-- Arena themes (Jim 2026-11-04). The Core layer (kitchens, rooftop food,
+-- pads) stays put; only Arena.Theme is swapped, so every cached marker part
+-- keeps working. Built themes wait in ServerStorage when not in use.
+type Theme = { build: (Instance, { [string]: any }) -> (), lighting: () -> () }
+local THEMES: { [string]: Theme } = {
+	City = { build = MapBuildings.buildCityTheme, lighting = MapBuildings.cityLighting },
+	Water = { build = MapWater.buildTheme, lighting = MapWater.lighting },
+}
+local themesEnabled = false -- false when the place ships its own Workspace.Arena
+local currentArena: string = Config.DefaultArena
+local themeFolders: { [string]: Folder } = {}
+local themeStore: Folder
+
+local function themeFolder(id: string): Folder
+	local cached = themeFolders[id]
+	if cached then
+		return cached
+	end
+	local f = Instance.new("Folder")
+	f.Name = "Theme"
+	f:SetAttribute("ArenaId", id)
+	THEMES[id].build(f, Config.Map)
+	themeFolders[id] = f
+	return f
+end
 
 local function teamColor(teamId: string): BrickColor
 	for _, t in Config.Teams do
@@ -77,13 +106,24 @@ end
 function MapService.start()
 	local existing = Workspace:FindFirstChild("Arena")
 	if existing then
-		arena = existing
+		arena = existing -- custom map: one arena, no vote
 	else
 		arena = Instance.new("Folder")
 		arena.Name = "Arena"
-		MapBuildings.buildArena(arena, Config.Map)
+		local core = Instance.new("Folder")
+		core.Name = "Core"
+		MapBuildings.buildCore(core, Config.Map)
+		core.Parent = arena
+		themeStore = Instance.new("Folder")
+		themeStore.Name = "ArenaThemes"
+		themeStore.Parent = ServerStorage
+		themeFolder(currentArena).Parent = arena
+		THEMES[currentArena].lighting()
 		arena.Parent = Workspace
+		themesEnabled = true
 	end
+	Remotes.setState("Arena", currentArena)
+	Remotes.setState("ArenaVoting", themesEnabled)
 
 	for _, t in Config.Teams do
 		local pantry = marker(t.id .. "Pantry").Position
@@ -112,6 +152,48 @@ function MapService.start()
 		table.insert(burgerSpawns, marker("BurgerSpawn" .. i).Position)
 		i += 1
 	end
+
+	-- Build the other themes now (off-screen, in ServerStorage) so a vote
+	-- doesn't stall the match start.
+	if themesEnabled then
+		task.defer(function()
+			for _, a in Config.Arenas do
+				if THEMES[a.id] and not themeFolders[a.id] then
+					local f = themeFolder(a.id)
+					if f.Parent == nil then
+						f.Parent = themeStore
+					end
+				end
+			end
+		end)
+	end
+end
+
+-- True when players can vote for the arena (generated arena, not a custom map).
+function MapService.arenaVoting(): boolean
+	return themesEnabled
+end
+
+function MapService.currentArena(): string
+	return currentArena
+end
+
+-- Swap the theme around the Core. Returns true if the arena changed.
+function MapService.setArena(id: string): boolean
+	if not themesEnabled or id == currentArena or THEMES[id] == nil then
+		return false
+	end
+	local old = themeFolders[currentArena]
+	local new = themeFolder(id)
+	new.Parent = arena -- new ground in before the old one goes
+	if old then
+		old.Parent = themeStore
+	end
+	THEMES[id].lighting()
+	currentArena = id
+	Remotes.setState("Arena", id)
+	print("[Arena] now " .. id)
+	return true
 end
 
 function MapService.kitchen(teamId: string): Kitchen

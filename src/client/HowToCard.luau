@@ -148,6 +148,12 @@ function HowToCard.start()
 		local pickerOpen = pickerPanel ~= nil and (pickerPanel :: GuiObject).Visible
 
 		card.Visible = wanted and not pickerOpen
+		-- Make room for the arena vote panel under the score bar.
+		local vote = playerGui:FindFirstChild("ArenaVote")
+		local votePanel = vote and vote:FindFirstChild("Panel")
+		local voteOpen = votePanel ~= nil and (votePanel :: GuiObject).Visible
+		card.Position = if voteOpen then UDim2.new(0.5, 0, 0.5, 45) else UDim2.fromScale(0.5, 0.5)
+		card.Size = if voteOpen then UDim2.new(0.9, 0, 0.55, -20) else UDim2.fromScale(0.9, 0.62)
 		openBtn.Text = if wanted then "CLOSE HELP" else "HOW TO PLAY"
 		task.wait(0.15)
 	end

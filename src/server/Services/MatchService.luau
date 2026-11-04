@@ -10,6 +10,8 @@ local Scoring = require(ReplicatedStorage.Shared.Rules.Scoring)
 local MatchEnd = require(ReplicatedStorage.Shared.Rules.MatchEnd)
 local MatchPhase = require(ReplicatedStorage.Shared.Rules.MatchPhase)
 local TeamPick = require(ReplicatedStorage.Shared.Rules.TeamPick)
+local ArenaVote = require(ReplicatedStorage.Shared.Rules.ArenaVote)
+local Net = require(ReplicatedStorage.Shared.Net)
 local Remotes = require(script.Parent.Remotes)
 local MapService = require(script.Parent.MapService)
 local Actors = require(script.Parent.Actors)
@@ -26,6 +28,11 @@ local scores: Scoring.Scores
 local matchStartedAt = 0
 local forcedEnd = false
 
+-- Arena vote: one vote per player (UserId), taken in Waiting/Intermission,
+-- counted at match start, then cleared.
+local arenaIds: { string } = {}
+local votes: ArenaVote.Votes = {}
+
 local TICK = 0.25
 
 function MatchService.init(s)
@@ -34,6 +41,9 @@ function MatchService.init(s)
 		table.insert(teamIds, t.id)
 	end
 	scores = Scoring.new(teamIds)
+	for _, a in Config.Arenas do
+		table.insert(arenaIds, a.id)
+	end
 end
 
 function MatchService.teamIds(): { string }
@@ -74,6 +84,45 @@ local function publish()
 	Remotes.setState("PhaseEndsAt", endsAt)
 end
 
+local function publishVotes()
+	local counts = ArenaVote.counts(votes, arenaIds)
+	for _, id in arenaIds do
+		Remotes.setState("ArenaVotes_" .. id, counts[id])
+	end
+end
+
+local function arenaName(id: string): string
+	for _, a in Config.Arenas do
+		if a.id == id then
+			return a.displayName
+		end
+	end
+	return id
+end
+
+function MatchService.voteArena(player: Player, arenaId: any)
+	if not MapService.arenaVoting() or not ArenaVote.canVote(MatchService.phase()) then
+		return
+	end
+	if not ArenaVote.isArena(arenaId, arenaIds) then
+		return
+	end
+	votes[tostring(player.UserId)] = arenaId
+	publishVotes()
+end
+
+-- Count the votes and switch the arena (before everyone is sent home).
+local function applyArenaVote()
+	if MapService.arenaVoting() then
+		local winner = ArenaVote.winner(votes, arenaIds, MapService.currentArena(), function(n: number): number
+			return math.random(n)
+		end)
+		MapService.setArena(winner)
+	end
+	votes = {}
+	publishVotes()
+end
+
 -- Teleport an actor to its spawn with brief tag immunity.
 function MatchService.sendHome(actor: Actor)
 	actor.model:PivotTo(MapService.spawnCFrame(actor.team))
@@ -109,7 +158,8 @@ local function startMatch(now: number)
 		MatchService.sendHome(actor)
 	end
 	Remotes.setState("Winner", "")
-	Remotes.announce("Raid the enemy kitchen! First to " .. Config.PointsToWin .. " wins.")
+	local where = if MapService.arenaVoting() then arenaName(MapService.currentArena()) .. "! " else ""
+	Remotes.announce(where .. "Raid the enemy kitchen! First to " .. Config.PointsToWin .. " wins.")
 end
 
 local function endMatch()
@@ -149,11 +199,14 @@ local function step()
 	if nextState.phase ~= state.phase then
 		state = nextState
 		if state.phase == "Playing" then
+			applyArenaVote()
 			startMatch(now)
 		elseif state.phase == "PostMatch" then
 			endMatch()
 		elseif state.phase == "Intermission" then
-			Remotes.announce("Match starting soon - pick your character!")
+			Remotes.announce(if MapService.arenaVoting()
+				then "Match starting soon - vote for the arena!"
+				else "Match starting soon - pick your character!")
 		end
 	end
 	publish()
@@ -203,6 +256,17 @@ function MatchService.start()
 
 	state = MatchPhase.initial(Actors.now())
 	publish()
+	publishVotes()
+
+	Remotes.event(Net.RequestArenaVote).OnServerEvent:Connect(function(player: Player, arenaId: any)
+		MatchService.voteArena(player, arenaId)
+	end)
+	Players.PlayerRemoving:Connect(function(player: Player)
+		if votes[tostring(player.UserId)] ~= nil then
+			votes[tostring(player.UserId)] = nil
+			publishVotes()
+		end
+	end)
 
 	task.spawn(function()
 		while true do

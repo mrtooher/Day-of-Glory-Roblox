@@ -26,7 +26,7 @@ Config.MaxPlayersPerTeam = 8
 Config.MinHumansToStart = 1 -- Jim 2026-10-22: solo players start vs bots (was 2: solo joiners sat on "Waiting", no music)
 
 -- Match ---------------------------------------------------------------------
-Config.PointsToWin = 10
+Config.PointsToWin = 7 -- Jim 2026-11-04: was 10
 Config.MatchDurationSeconds = 10 * 60
 Config.IntermissionSeconds = 15
 Config.PostMatchSeconds = 8
@@ -154,6 +154,15 @@ Config.Map = {
 	spawnZ = 0,
 	burgerSpawns = { { x = 0, z = 30 }, { x = 0, z = -30 } },
 }
+
+-- Arenas (Jim 2026-11-04): same kitchens, rooftop food and pads in every
+-- arena; the look around them changes. Players vote before each match
+-- (Shared/Rules/ArenaVote: most votes wins, tie = random, no votes = keep).
+Config.Arenas = {
+	{ id = "City", displayName = "CITY STREETS" },
+	{ id = "Water", displayName = "WATER WORLD" },
+}
+Config.DefaultArena = "City"
 
 -- Mid-match character switch only within this many studs of your own spawn,
 -- and not while carrying food. Between matches you can switch anywhere.

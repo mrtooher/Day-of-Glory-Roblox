@@ -7,6 +7,7 @@ return {
 	-- client -> server
 	RequestPower = "RequestPower", -- no arguments; server uses its own positions
 	RequestCharacter = "RequestCharacter", -- (characterId: string)
+	RequestArenaVote = "RequestArenaVote", -- (arenaId: string) before a match
 
 	-- server -> client
 	Announce = "Announce", -- (text: string)

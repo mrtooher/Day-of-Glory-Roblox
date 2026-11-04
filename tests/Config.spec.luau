@@ -16,7 +16,7 @@ return function(t)
 	end)
 
 	t.test("brief values", function()
-		t.eq(Config.PointsToWin, 10)
+		t.eq(Config.PointsToWin, 7)
 		t.eq(Config.MatchDurationSeconds, 600)
 		t.eq(Config.DroppedFoodSeconds, 10)
 		t.eq(Config.MinPlayersPerTeam, 4)
