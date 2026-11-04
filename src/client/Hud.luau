@@ -1,5 +1,5 @@
 --!strict
--- Scoreboard (points to 10), match clock, phase text and announcements.
+-- Scoreboard (points to Config.PointsToWin, 7), match clock, phase text and announcements.
 
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")

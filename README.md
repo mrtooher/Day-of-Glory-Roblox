@@ -2,7 +2,7 @@
 
 Kelly and friends chase takeout food. Two teams raid each other's kitchens:
 grab food from the enemy pantry, carry it to your own drop-off, first team to
-**10** wins (backup 10-minute clock: most points wins). Tag, don't kill — no
+**7** wins (backup 10-minute clock: most points wins). Tag, don't kill — no
 weapons, no blood.
 
 This repo is a [Rojo](https://rojo.space) project written in Luau.
@@ -32,6 +32,25 @@ tests/                    Lune test runner + specs for Rules, Powers and Config
 The server is authoritative: clients only send "use my power" and "I want
 character X". Scoring, tagging, food pickup and cooldowns are decided from
 server-side positions.
+
+## Arenas
+
+Two arenas share the same gameplay skeleton (`MapBuildings.buildCore`: both
+kitchens, the rooftop food stands and stairs, burger spawns, dash and jump
+pads). Only the look around them changes (`Arena.Theme`):
+
+| Arena | Theme module | Look |
+|---|---|---|
+| CITY STREETS | `MapBuildings.buildCityTheme` | streets, shops, park, bridge |
+| WATER WORLD | `MapWater.buildTheme` | beach boardwalk, lagoon, docks, boats, ocean, beach restaurants |
+
+While players wait and during the countdown, a **VOTE FOR THE ARENA** panel
+sits under the score bar. Most votes wins, a tie is picked at random, no votes
+keeps the current arena (`Shared/Rules/ArenaVote`). The swap happens at match
+start; unused themes wait in `ServerStorage.ArenaThemes`. A custom
+`Workspace.Arena` (step 5 below) turns the vote off.
+
+Check an arena offline: `lune run tools/arena-check/run City` or `... Water`.
 
 ## Characters
 

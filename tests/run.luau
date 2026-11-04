@@ -25,6 +25,7 @@ local specs: { [string]: any } = {
 	["Rules/FoodLayout.spec"] = require("./Rules/FoodLayout.spec"),
 	["Rules/Beacon.spec"] = require("./Rules/Beacon.spec"),
 	["Rules/HowTo.spec"] = require("./Rules/HowTo.spec"),
+	["Rules/ArenaVote.spec"] = require("./Rules/ArenaVote.spec"),
 	["Config.spec"] = require("./Config.spec"),
 	["Looks.spec"] = require("./Looks.spec"),
 }

@@ -1411,40 +1411,44 @@ local function setupLighting()
 	Lighting.EnvironmentDiffuseScale = 0.6
 	Lighting.EnvironmentSpecularScale = 0.6
 
-	if not Lighting:FindFirstChild("Atmosphere") then
-		local atm = Instance.new("Atmosphere")
-		atm.Name = "Atmosphere"
-		atm.Density = 0.25
-		atm.Offset = 0.15
-		atm.Color = C(200, 215, 235)
-		atm.Decay = C(255, 210, 170)
-		atm.Glare = 0.2
-		atm.Haze = 1
-		atm.Parent = Lighting
+	-- Effects are found-or-created and every property is set each time, so
+	-- switching back from another theme restores the city look.
+	local function effect(className: string, name: string): any
+		local e = Lighting:FindFirstChild(name)
+		if e and e.ClassName ~= className then
+			e:Destroy()
+			e = nil
+		end
+		if not e then
+			e = Instance.new(className)
+			e.Name = name
+			e.Parent = Lighting
+		end
+		return e
 	end
-	if not Lighting:FindFirstChild("Bloom") then
-		local bloom = Instance.new("BloomEffect")
-		bloom.Name = "Bloom"
-		bloom.Intensity = 0.35
-		bloom.Size = 20
-		bloom.Threshold = 1.6 -- only neon/lights bloom, not white walls
-		bloom.Parent = Lighting
-	end
-	if not Lighting:FindFirstChild("ColorCorrection") then
-		local cc = Instance.new("ColorCorrectionEffect")
-		cc.Name = "ColorCorrection"
-		cc.Saturation = 0.18
-		cc.Contrast = 0.06
-		cc.Brightness = 0
-		cc.TintColor = C(255, 250, 242)
-		cc.Parent = Lighting
-	end
-	if not Lighting:FindFirstChild("SunRays") then
-		local rays = Instance.new("SunRaysEffect")
-		rays.Name = "SunRays"
-		rays.Intensity = 0.08
-		rays.Spread = 0.6
-		rays.Parent = Lighting
+	local atm = effect("Atmosphere", "Atmosphere")
+	atm.Density = 0.25
+	atm.Offset = 0.15
+	atm.Color = C(200, 215, 235)
+	atm.Decay = C(255, 210, 170)
+	atm.Glare = 0.2
+	atm.Haze = 1
+	local bloom = effect("BloomEffect", "Bloom")
+	bloom.Intensity = 0.35
+	bloom.Size = 20
+	bloom.Threshold = 1.6 -- only neon/lights bloom, not white walls
+	local cc = effect("ColorCorrectionEffect", "ColorCorrection")
+	cc.Saturation = 0.18
+	cc.Contrast = 0.06
+	cc.Brightness = 0
+	cc.TintColor = C(255, 250, 242)
+	local rays = effect("SunRaysEffect", "SunRays")
+	rays.Intensity = 0.08
+	rays.Spread = 0.6
+	-- Other themes may add their own sky; the city uses Roblox's default.
+	local sky = Lighting:FindFirstChild("ThemeSky")
+	if sky then
+		sky:Destroy()
 	end
 end
 
@@ -1572,47 +1576,25 @@ local function buildRooftopFood(root: Instance)
 end
 
 -- Arena ---------------------------------------------------------------------------
+-- The arena is two layers (Jim 2026-11-04: a second arena, players vote):
+--   Core  - the gameplay skeleton every arena shares: both team kitchens,
+--           rooftop food stands + stairs, burger spawns, dash/jump pads.
+--           Built once; MapService, FoodService, PickupService and the client
+--           (GameFeel, Pads) hold references to these parts.
+--   Theme - everything you look at: boundary, ground, streets, shops (the
+--           four shops under the rooftop food keep the same 30x30x13
+--           footprints), decoration, lighting. Swapped between matches.
 
-function MapBuildings.buildArena(folder: Instance, m: { [string]: any })
-	local wallHeight = m.wallHeight or 20
-	local halfLen = m.fieldLength / 2
-	local halfWid = m.fieldWidth / 2
-
-	-- 1. Outer boundary walls (brick with a cap).
-	local wallColor = C(185, 115, 85)
-	local walls = newFolder(folder, "Boundary")
-	solid(walls, "WallNorth", V(m.fieldLength, wallHeight, 2), CF(0, wallHeight / 2, halfWid), wallColor, M.Brick)
-	solid(walls, "WallSouth", V(m.fieldLength, wallHeight, 2), CF(0, wallHeight / 2, -halfWid), wallColor, M.Brick)
-	solid(walls, "WallEast", V(2, wallHeight, m.fieldWidth), CF(halfLen, wallHeight / 2, 0), wallColor, M.Brick)
-	solid(walls, "WallWest", V(2, wallHeight, m.fieldWidth), CF(-halfLen, wallHeight / 2, 0), wallColor, M.Brick)
-	deco(walls, "WallCap", V(m.fieldLength + 2, 0.8, 2.6), CF(0, wallHeight + 0.4, halfWid), C(225, 215, 200), M.Concrete)
-	deco(walls, "WallCap", V(m.fieldLength + 2, 0.8, 2.6), CF(0, wallHeight + 0.4, -halfWid), C(225, 215, 200), M.Concrete)
-	deco(walls, "WallCap", V(2.6, 0.8, m.fieldWidth + 2), CF(halfLen, wallHeight + 0.4, 0), C(225, 215, 200), M.Concrete)
-	deco(walls, "WallCap", V(2.6, 0.8, m.fieldWidth + 2), CF(-halfLen, wallHeight + 0.4, 0), C(225, 215, 200), M.Concrete)
-
-	-- 2. Ground and team floors.
-	solid(folder, "Ground", V(m.fieldLength, 1, m.fieldWidth), CF(0, -0.5, 0), C(105, 175, 85), M.Grass)
-	solid(folder, "RedBaseFloor", V(40, 0.2, m.fieldWidth), CF(-halfLen + 20, 0.1, 0), C(200, 95, 80), M.Concrete)
-	solid(folder, "BlueBaseFloor", V(40, 0.2, m.fieldWidth), CF(halfLen - 20, 0.1, 0), C(80, 130, 210), M.Concrete)
-
-	buildStreets(folder, m)
-	buildPark(folder, m)
-	buildBridge(folder)
-
-	-- 3. Team bases.
+-- Gameplay skeleton shared by every theme.
+function MapBuildings.buildCore(folder: Instance, m: { [string]: any })
+	-- Team bases.
 	buildBase(folder, m, "Red")
 	buildBase(folder, m, "Blue")
 
-	-- 4. Shops along the street.
-	local shops = newFolder(folder, "Shops")
-	for _, b in BUILDINGS do
-		buildShop(shops, b)
-	end
-	-- Rooftop food stands and their stairs (Sushi Bar, Burger Joint, Sunny
-	-- Apts, Arcade).
+	-- Rooftop food stands and their stairs (on the four shops nearest the bases).
 	buildRooftopFood(folder)
 
-	-- 5. Burger spawns (middle pickups) with a glowing ring.
+	-- Burger spawns (middle pickups) with a glowing ring.
 	for i, b in m.burgerSpawns do
 		local p = cyl(folder, "BurgerSpawn" .. i, V(0.2, 5, 5), CF(b.x, 0.5, b.z) * UP, C(255, 200, 60), M.Neon)
 		p.Transparency = 0.2
@@ -1621,7 +1603,7 @@ function MapBuildings.buildArena(folder: Instance, m: { [string]: any })
 		light(ring, C(255, 210, 90), 12, 1)
 	end
 
-	-- 6. Pads: dash pads point along the street (both ways on the main street,
+	-- Pads: dash pads point along the street (both ways on the main street,
 	-- toward the centre in the alleys); jump pads sit in the side streets next
 	-- to the Bank, Police, Apartments and Arcade.
 	local pads = newFolder(folder, "Pads")
@@ -1636,9 +1618,63 @@ function MapBuildings.buildArena(folder: Instance, m: { [string]: any })
 	for i, j in jump do
 		jumpPad(pads, i, j[1], j[2])
 	end
+end
 
-	-- 7. Lighting.
+-- City Streets theme (the original arena's look).
+function MapBuildings.buildCityTheme(folder: Instance, m: { [string]: any })
+	local wallHeight = m.wallHeight or 20
+	local halfLen = m.fieldLength / 2
+	local halfWid = m.fieldWidth / 2
+
+	-- Outer boundary walls (brick with a cap).
+	local wallColor = C(185, 115, 85)
+	local walls = newFolder(folder, "Boundary")
+	solid(walls, "WallNorth", V(m.fieldLength, wallHeight, 2), CF(0, wallHeight / 2, halfWid), wallColor, M.Brick)
+	solid(walls, "WallSouth", V(m.fieldLength, wallHeight, 2), CF(0, wallHeight / 2, -halfWid), wallColor, M.Brick)
+	solid(walls, "WallEast", V(2, wallHeight, m.fieldWidth), CF(halfLen, wallHeight / 2, 0), wallColor, M.Brick)
+	solid(walls, "WallWest", V(2, wallHeight, m.fieldWidth), CF(-halfLen, wallHeight / 2, 0), wallColor, M.Brick)
+	deco(walls, "WallCap", V(m.fieldLength + 2, 0.8, 2.6), CF(0, wallHeight + 0.4, halfWid), C(225, 215, 200), M.Concrete)
+	deco(walls, "WallCap", V(m.fieldLength + 2, 0.8, 2.6), CF(0, wallHeight + 0.4, -halfWid), C(225, 215, 200), M.Concrete)
+	deco(walls, "WallCap", V(2.6, 0.8, m.fieldWidth + 2), CF(halfLen, wallHeight + 0.4, 0), C(225, 215, 200), M.Concrete)
+	deco(walls, "WallCap", V(2.6, 0.8, m.fieldWidth + 2), CF(-halfLen, wallHeight + 0.4, 0), C(225, 215, 200), M.Concrete)
+
+	-- Ground and team floors.
+	solid(folder, "Ground", V(m.fieldLength, 1, m.fieldWidth), CF(0, -0.5, 0), C(105, 175, 85), M.Grass)
+	solid(folder, "RedBaseFloor", V(40, 0.2, m.fieldWidth), CF(-halfLen + 20, 0.1, 0), C(200, 95, 80), M.Concrete)
+	solid(folder, "BlueBaseFloor", V(40, 0.2, m.fieldWidth), CF(halfLen - 20, 0.1, 0), C(80, 130, 210), M.Concrete)
+
+	buildStreets(folder, m)
+	buildPark(folder, m)
+	buildBridge(folder)
+
+	-- Shops along the street (four of them carry the rooftop food).
+	local shops = newFolder(folder, "Shops")
+	for _, b in BUILDINGS do
+		buildShop(shops, b)
+	end
+end
+
+MapBuildings.cityLighting = setupLighting
+
+-- Whole City arena in one folder (Core + Theme + lighting). Used by
+-- tools/arena-check and as the default when there is no theme system.
+function MapBuildings.buildArena(folder: Instance, m: { [string]: any })
+	local core = newFolder(folder, "Core")
+	MapBuildings.buildCore(core, m)
+	local theme = newFolder(folder, "Theme")
+	MapBuildings.buildCityTheme(theme, m)
 	setupLighting()
 end
+
+-- Building blocks for other themes (src/server/Services/MapWater.luau).
+MapBuildings.kit = {
+	V = V, CF = CF, C = C, M = M, ry = ry, UP = UP, FLIP = FLIP,
+	WHITE = WHITE, BLACK = BLACK, GOLD = GOLD, GLASS = GLASS, LEAF = LEAF, WOOD = WOOD, STEEL = STEEL, PICADO = PICADO,
+	solid = solid, deco = deco, flat = flat, neon = neon, glass = glass, cyl = cyl, vcyl = vcyl, ball = ball, wedge = wedge,
+	light = light, newFolder = newFolder, triangle = triangle, rope = rope, addLabel = addLabel, sign = sign,
+	billboard = billboard, faceCF = faceCF, window = window, shopWindow = shopWindow, awning = awning,
+	tree = tree, streetLamp = streetLamp, bench = bench, hydrant = hydrant, trashCan = trashCan, cone = cone, pottedPlant = pottedPlant,
+	planter = planter, aFrame = aFrame, cafeTable = cafeTable, car = car, bunting = bunting, buildShop = buildShop,
+}
 
 return MapBuildings

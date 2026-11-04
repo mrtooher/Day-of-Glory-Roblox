@@ -1,9 +1,9 @@
 --!nocheck
--- Offline arena check: `lune run tools/arena-check/run`
--- Runs MapBuildings.buildArena in Lune's Roblox DOM (no Studio) and checks
--- the gameplay contract: markers exist, kitchens are reachable, spawn /
--- doorways / drop-offs / main street are not blocked, and the part budget.
--- Exits non-zero on any failure.
+-- Offline arena check: `lune run tools/arena-check/run [City|Water]`
+-- Builds Core + the named theme (default City) in Lune's Roblox DOM (no
+-- Studio) and checks the gameplay contract: markers exist, kitchens are
+-- reachable, spawn / doorways / drop-offs / main street are not blocked, and
+-- the part budget. Exits non-zero on any failure.
 
 local roblox = require("@lune/roblox")
 local fs = require("@lune/fs")
@@ -38,9 +38,37 @@ local MapBuildings = luau.load(src, { debugName = "MapBuildings", environment = 
 local Config = require("../../src/shared/Config")
 local m = Config.Map
 
+local themeId = process.args[1] or "City"
 local folder = roblox.Instance.new("Folder")
 folder.Name = "Arena"
-MapBuildings.buildArena(folder, m)
+local core = roblox.Instance.new("Folder")
+core.Name = "Core"
+core.Parent = folder
+MapBuildings.buildCore(core, m)
+local themeFolder = roblox.Instance.new("Folder")
+themeFolder.Name = "Theme"
+themeFolder.Parent = folder
+-- Far-off scenery (ocean, boats, islands) may sit outside the field if it
+-- can't be touched; City keeps everything near the walls.
+local sceneryMargin = 30
+if themeId == "City" then
+	MapBuildings.buildCityTheme(themeFolder, m)
+elseif themeId == "Water" then
+	-- MapWater does `require(script.Parent.MapBuildings)`.
+	local waterEnv = setmetatable({
+		script = { Parent = { MapBuildings = "MapBuildings" } },
+		require = function(x)
+			assert(x == "MapBuildings", "MapWater may only require MapBuildings here")
+			return MapBuildings
+		end,
+	}, { __index = env })
+	local MapWater = luau.load(fs.readFile("src/server/Services/MapWater.luau"), { debugName = "MapWater", environment = waterEnv })()
+	MapWater.buildTheme(themeFolder, m)
+	sceneryMargin = 400
+else
+	error("unknown theme " .. themeId)
+end
+print("theme: " .. themeId)
 
 local failures = 0
 local passes = 0
@@ -329,17 +357,33 @@ check(jump >= 2, "at least 2 JumpPads (got " .. jump .. ")")
 check(#parts < 4000, "part count < 4000 (got " .. #parts .. ")")
 local unanchored = 0
 local outside = 0
+local outsideSolid = 0
 for _, p in parts do
 	if not p.Anchored then
 		unanchored += 1
 	end
 	local pp = position(p)
-	if math.abs(pp.X) > m.fieldLength / 2 + 30 or math.abs(pp.Z) > m.fieldWidth / 2 + 30 then
+	local dx, dz = math.abs(pp.X) - m.fieldLength / 2, math.abs(pp.Z) - m.fieldWidth / 2
+	if dx > sceneryMargin or dz > sceneryMargin then
 		outside += 1
+	end
+	-- Anything a player could stand on beyond the boundary (Ground slabs under
+	-- the walls are allowed to reach 30 studs out).
+	if (dx > 30 or dz > 30) and p.CanCollide then
+		outsideSolid += 1
+		print("  outside the field and collidable: " .. p.Name)
 	end
 end
 check(unanchored == 0, "all parts anchored (" .. unanchored .. " not)")
 check(outside == 0, "no parts far outside the field (" .. outside .. ")")
+check(outsideSolid == 0, "nothing collidable outside the field (" .. outsideSolid .. ")")
+
+-- Boundary: players must not be able to leave the field (walls at least
+-- wallHeight tall on all four sides, collidable; they may be invisible).
+for _, w in { "WallNorth", "WallSouth", "WallEast", "WallWest" } do
+	local p = find(w)
+	check(p ~= nil and p:IsA("BasePart") and p.CanCollide and p.Size.Y >= (m.wallHeight or 20) - 0.01, w .. " collidable and >= wallHeight tall")
+end
 
 local signs = 0
 for _, d in folder:GetDescendants() do
@@ -349,7 +393,7 @@ for _, d in folder:GetDescendants() do
 end
 check(signs >= 10, "at least 10 signs (got " .. signs .. ")")
 
-print(string.format("arena: %d parts, %d dash pads, %d jump pads, %d signs", #parts, dash, jump, signs))
+print(string.format(themeId .. " arena: %d parts, %d dash pads, %d jump pads, %d signs", #parts, dash, jump, signs))
 print(string.format("ARENA CHECK: %d passed, %d failed", passes, failures))
 if failures > 0 or passes == 0 then
 	process.exit(1)
