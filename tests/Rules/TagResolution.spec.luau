@@ -58,4 +58,20 @@ return function(t)
 	t.test("resolveContact across the line tags nobody", function()
 		t.eq(TagResolution.resolveContact(actor("Red", "Red"), actor("Blue", "Blue")), nil)
 	end)
+
+	t.test("golden burger carrier can be tagged anywhere, by any enemy", function()
+		-- Blue carrier running home through Blue's half; Red tagger also in Blue's half.
+		local carrier = actor("Blue", "Blue", { anywhere = true })
+		local red = actor("Red", "Blue")
+		local ok = TagResolution.canTag(red, carrier)
+		t.truthy(ok)
+		t.eq(TagResolution.resolveContact(red, carrier), "b")
+		-- Still not while vanished or immune, and the carrier can't tag back from there.
+		t.falsy((TagResolution.canTag(red, actor("Blue", "Blue", { anywhere = true, immune = true }))))
+		t.falsy((TagResolution.canTag(actor("Red", "Blue", { disabled = true }), carrier)))
+		-- The carrier stands in its own half, so it could also tag the Red
+		-- intruder: on contact the golden carrier is the one tagged, whatever
+		-- the order.
+		t.eq(TagResolution.resolveContact(carrier, red), "a")
+	end)
 end

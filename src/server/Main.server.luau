@@ -11,6 +11,7 @@ local order = {
 	"StatusService",
 	"MatchService",
 	"FoodService",
+	"GoldenService",
 	"PickupService",
 	"Effects",
 	"PowerService",

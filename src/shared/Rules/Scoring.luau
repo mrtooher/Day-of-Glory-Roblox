@@ -14,13 +14,14 @@ function Scoring.new(teamIds: { string }): Scores
 end
 
 -- Returns the new scores and whether `teamId` has reached `pointsToWin`.
-function Scoring.award(scores: Scores, teamId: string, pointsToWin: number): (Scores, boolean)
+-- `amount` defaults to 1 (the golden burger is worth more).
+function Scoring.award(scores: Scores, teamId: string, pointsToWin: number, amount: number?): (Scores, boolean)
 	local current = scores[teamId]
 	if current == nil then
 		error("Scoring.award: unknown team " .. tostring(teamId))
 	end
 	local nextScores = table.clone(scores)
-	nextScores[teamId] = current + 1
+	nextScores[teamId] = current + (amount or 1)
 	return nextScores, nextScores[teamId] >= pointsToWin
 end
 

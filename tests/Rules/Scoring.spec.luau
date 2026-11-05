@@ -25,6 +25,22 @@ return function(t)
 		t.truthy(won)
 	end)
 
+	t.test("award can add more than one point (golden burger)", function()
+		local s = Scoring.new({ "Red", "Blue" })
+		local s2, won = Scoring.award(s, "Red", 7, 2)
+		t.eq(s2.Red, 2)
+		t.falsy(won)
+		for _ = 1, 2 do
+			s2 = Scoring.award(s2, "Red", 7)
+		end
+		local s3, won3 = Scoring.award(s2, "Red", 7, 2)
+		t.eq(s3.Red, 6)
+		t.falsy(won3)
+		local s4, won4 = Scoring.award(Scoring.award(s3, "Blue", 7), "Red", 7, 2)
+		t.eq(s4.Red, 8, "can pass the target")
+		t.truthy(won4)
+	end)
+
 	t.test("award to unknown team errors", function()
 		local s = Scoring.new({ "Red", "Blue" })
 		t.throws(function()

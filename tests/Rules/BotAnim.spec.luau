@@ -1,0 +1,28 @@
+local BotAnim = require("../../src/shared/Rules/BotAnim")
+
+return function(t)
+	t.test("standing still idles, moving walks or runs", function()
+		t.eq(BotAnim.pick("Running", 0), "idle")
+		t.eq(BotAnim.pick("Running", 0.4), "idle")
+		t.eq(BotAnim.pick("Running", 5), "walk")
+		t.eq(BotAnim.pick("Running", 14), "run")
+		t.eq(BotAnim.pick("RunningNoPhysics", 20), "run")
+	end)
+
+	t.test("air, climbing and seated states", function()
+		t.eq(BotAnim.pick("Jumping", 10), "jump")
+		t.eq(BotAnim.pick("Freefall", 0), "fall")
+		t.eq(BotAnim.pick("Climbing", 3), "climb")
+		t.eq(BotAnim.pick("Seated", 0), "sit")
+		t.eq(BotAnim.pick("Swimming", 4), "swim")
+		t.eq(BotAnim.pick("Landed", 6), "walk")
+	end)
+
+	t.test("playback speed follows ground speed", function()
+		t.near(BotAnim.speedScale("run", 16), 1)
+		t.near(BotAnim.speedScale("run", 8), 0.5)
+		t.near(BotAnim.speedScale("walk", 8), 1)
+		t.near(BotAnim.speedScale("idle", 0), 1)
+		t.truthy(BotAnim.speedScale("run", 0.01) >= 0.1, "never freezes")
+	end)
+end

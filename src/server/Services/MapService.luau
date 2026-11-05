@@ -169,6 +169,16 @@ function MapService.start()
 	end
 end
 
+-- Where the golden burger appears: on top of the current arena's BridgeDeck
+-- (both themes have one), or mid-field if a custom map has no bridge.
+function MapService.bridgeSpot(): Vector3
+	local deck = arena and arena:FindFirstChild("BridgeDeck", true)
+	if deck and deck:IsA("BasePart") then
+		return deck.Position + Vector3.new(0, deck.Size.Y / 2 + 1.6, 0)
+	end
+	return Vector3.new(Config.Map.centerX, 3, 0)
+end
+
 -- True when players can vote for the arena (generated arena, not a custom map).
 function MapService.arenaVoting(): boolean
 	return themesEnabled
