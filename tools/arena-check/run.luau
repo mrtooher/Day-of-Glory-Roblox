@@ -428,6 +428,25 @@ if themeId == "Water" then
 			end
 		end
 	end
+	-- No two water blocks overlap: with every block inside a zone and the
+	-- areas adding up, that means each zone is covered exactly once.
+	local blocks = {}
+	for _, p in parts do
+		if p.Name == "LagoonWater" or p.Name == "CanalWater" then
+			local minV, maxV = aabb(p)
+			table.insert(blocks, { minV, maxV })
+		end
+	end
+	local overlaps = 0
+	for i = 1, #blocks do
+		for j = i + 1, #blocks do
+			local a, b = blocks[i], blocks[j]
+			if overlap(a[1].X, a[2].X, b[1].X, b[2].X) > EPS and overlap(a[1].Z, a[2].Z, b[1].Z, b[2].Z) > EPS then
+				overlaps += 1
+			end
+		end
+	end
+	check(overlaps == 0, "water blocks don't overlap each other (" .. overlaps .. " pairs)")
 	check(waterParts >= 7, "at least 7 in-field water parts (got " .. waterParts .. ")")
 	check(badTop == 0, "every water part's top at depth " .. depth .. " (" .. badTop .. " off)")
 	check(badBottom == 0, "water bottoms clear the sand bed, y >= 0.06 (" .. badBottom .. " too low)")
@@ -451,6 +470,18 @@ if themeId == "Water" then
 			end
 		end
 		check(top >= depth, string.format("island %d has a collidable top at or above the water (top %.2f)", i, top))
+		-- The dry circle in Config must match the widest collidable step built.
+		local widest = 0
+		for _, p in parts do
+			if p.CanCollide and string.sub(p.Name, 1, 6) == "Island" then
+				local minV, maxV = aabb(p)
+				local cx, cz = (minV.X + maxV.X) / 2, (minV.Z + maxV.Z) / 2
+				if math.abs(cx - c.x) < 0.1 and math.abs(cz - c.z) < 0.1 then
+					widest = math.max(widest, (maxV.X - minV.X) / 2)
+				end
+			end
+		end
+		check(math.abs(widest - c.r) < 0.05, string.format("island %d: Config radius %.2f matches widest step %.2f", i, c.r, widest))
 	end
 	local docks, lowDocks = 0, 0
 	for _, p in parts do

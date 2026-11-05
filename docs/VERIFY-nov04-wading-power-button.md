@@ -50,11 +50,63 @@ Stage 6: Double-check gate
 | 14 | 4 | `luau-lsp analyze` after PowerButtons `keepClearOfJump` + new `client/Splash.luau` + Main boot list | FAIL | `src/client/PowerButtons.luau(63,57): TypeError: Key 'TouchGui' not found in class 'PlayerGui'` · `exit=1` |
 | 15 | 4 | Same `luau-lsp analyze` after `FindFirstChild("TouchGui")`; `rojo build default.project.json -o /tmp/dog-test.rbxl`; `lune run tests/run` | PASS | lsp `exit=0`, 0 lines · `Built project to dog-test.rbxl` `exit=0` · `TOTAL: 170 passed, 0 failed` |
 | 16 | 4 | (custom) Lune `deserializePlace` on the built place: new/changed modules present at their Rojo paths | PASS | `Shared.Rules.Wading ModuleScript 2372` · `Shared.Rules.PowerLayout ModuleScript 1267` · `Client.Splash ModuleScript 2848` · `Client.PowerButtons ModuleScript 6606` · `Services.StatusService ModuleScript 4248` · `5/5 found` |
+| 17 | 5 | fable-checks code.md → "Diff stays in scope": `git diff --stat main..HEAD` against the stage map | PASS | 14 files: Config, Movement, Rules/Wading, Rules/PowerLayout (st. 1, 4), MapWater (st. 2), arena-check (st. 2), StatusService (st. 3), PowerButtons, Splash, Main.client boot list (st. 4), 2 specs + tests/run, this log. No file outside the map. `732 insertions(+), 29 deletions(-)` |
+| 18 | 5 | `git push -u origin feat/wading-power-button`; `gh api repos/mrtooher/Day-of-Glory-Roblox/pulls` (REST; `gh pr create` refused: GraphQL blocked here) | PASS | `git ls-remote` → `8e821387f19fdc788fb71139a2223f176f42bb72 refs/heads/feat/wading-power-button` · PR `22` `https://github.com/mrtooher/Day-of-Glory-Roblox/pull/22` `open` (not merged: waits for Jim's playtest) |
+| 19 | 5 | Playtest script (below), steps 1–8 | UNVERIFIABLE | `not played`: written for Jim, who has Studio open; rows get filled from his report |
+
+## Playtest script (for Jim)
+
+```
+Playtest: POWER clear of jump on touch screens; Water World water slows, splashes, and islands/docks stay dry
+Setup: Studio, branch feat/wading-power-button synced with `rojo serve`; Test tab → Clients and Servers, 2 players
+       (a match needs 2 humans); on one client, View → Device emulator → a phone in landscape
+1. Phone client, any match → expect: POWER button directly above the round jump button, a small gap, nothing overlapping
+2. Rotate the emulated phone (or switch to a tablet) → expect: POWER moves with the jump button and stays clear of it
+3. Desktop client (no emulator) → expect: POWER in the bottom-right corner as before; Q still fires the power
+4. Vote WATER WORLD; at match start walk into the lagoon from the main street side → expect: water up to about the knees,
+   white splashes while moving, clearly slower (about 70%)
+5. Keep walking out the far side onto dry sand/promenade → expect: speed back to normal, splashes stop
+6. Jump repeatedly across the lagoon → expect: still slow on landing in water (hopping doesn't skip the slow)
+7. Climb onto the volleyball island (two low sand steps) and onto a dock (shore step) → expect: dry, normal speed, no splashes
+8. Error step: get hit by Pizza Toss while wading → expect: you move at the pizza slow, not slower (slows don't stack)
+Report back: PASS or FAIL per step, plus the Output text for any FAIL.
+```
+
+## Step 4: self-critique
+
+- Unconfirmed: Roblox's touch jump button is found by name (`PlayerGui.TouchGui` → `JumpButton`). If Roblox names it differently, POWER stays in the old corner (no crash). Playtest steps 1–2 settle it.
+- On the very first frame after the inset is matched, POWER can be off by the top-bar height until the next size change fires a re-place. Playtest step 1 would show it.
+- 70% speed, 1.2-stud depth and the bunny-hop rule are my picks, not Jim's: they're tuned in `Config.Map.water` and `Wading.DryClearance`.
+- Bots get slowed in water too. Their pathing doesn't know water costs extra, so they may still wade through the lagoon. Fair to both teams, but not checked in play.
+- No splash sound: `Config.Audio` has no splash id.
+| 20 | 6 | Panel (Haiku mechanical, Sonnet requirements/logic/ideas) on the finished branch + PR | FAIL | Sonnet C5: `README.md:101` still said `TOTAL: 151 passed, 0 failed` (suite prints 170) · Sonnet C3/C4: arena-check compared area per zone only (a misplaced block with the right area would pass) and nothing tied Config island radii to the built steps (checker changed r 15→20 in a copy: arena-check still `121/121`) |
+| 21 | 6 | Fixes: README total → 170; arena-check adds "water blocks don't overlap each other" and "island N: Config radius matches widest step"; `lune run tools/arena-check/run Water` + red runs on /tmp copies (island r=20; middle block split into two overlapping halves with the same total area) | PASS | `ARENA CHECK: 124 passed, 0 failed` `exit=0` · red copy 1: `FAIL island 1: Config radius 20.00 matches widest step 15.00` `exit=1` · red copy 2: `FAIL water blocks don't overlap each other (1 pairs)` `exit=1` |
+| 22 | 6 | Fresh Haiku re-check of the fixed items (README line, Water 124, both red copies, City 105) | PASS | `C1–C5 CONFIRMED` · `ARENA CHECK: 124 passed, 0 failed` · `FAIL island 1: Config radius 20.00 matches widest step 15.00` · `FAIL water blocks don't overlap each other (1 pairs)` · City `ARENA CHECK: 105 passed, 0 failed` |
 
 ## Double-check
 
-(pending)
+```
+Double-check: 17 claims + 5 requirements + ideas text (error-first).
+PASS: 15 claims, R1–R5.
+FIXED after FAIL: 2 — README test total said 151 (now 170); arena-check only compared area per zone and didn't
+  tie island radii to the map (added a no-overlap check and an island-radius check, both shown failing on broken copies).
+REFUTED-as-scoped, no change: Haiku C12 — row 9's `TOTAL: 165` is the count at that point in the run, not today's 170
+  (the log records history; rows are never edited).
+Ideas text: no factual errors; 2 wording fixes (lighthouse "vanished ... food carrier": carriers can't vanish;
+  Dog: written as a proposal, not current behavior).
+UNVERIFIABLE: in-game behavior (playtest rows 19), Roblox's JumpButton name/path, phone layout on a real device.
+Checkers: 1× Haiku, 1× Sonnet, 1 re-check round (1× Haiku). No Opus needed (no disagreement).
+```
+
+- Fixed: README `TOTAL: 151 passed` → `TOTAL: 170 passed`.
+- Fixed: arena-check could pass a misplaced water block with the right area → now fails on overlapping blocks (row 21).
+- Fixed: Config island radius could drift from the built island → now fails on a mismatch (row 21).
 
 ## Open items
 
-- Assumed decisions above (70% speed, 1.2-stud depth, slows don't stack, no splash sound) — Jim to confirm in playtest.
+- Assumed decisions above (70% speed, 1.2-stud depth, slows don't stack, no splash sound): Jim to confirm in the playtest.
+- Playtest steps 1–8 not played (row 19). PR #22 stays open until they are.
+- Roblox's touch jump button is found by name (`TouchGui` → `JumpButton`): judgment, not verified. If the name differs, POWER stays in the old corner.
+- The low end of each bridge ramp, where it's under the water, counts as wading. That's intended.
+- Bots wade through the lagoon at the slower speed. Their pathing doesn't avoid water. Not watched in play.
+- Pre-existing, not touched: "scored for Blue!" uses the team id; README step 4 says a match needs 2 humans.
