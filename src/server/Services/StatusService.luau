@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Movement = require(ReplicatedStorage.Shared.Rules.Movement)
+local Wading = require(ReplicatedStorage.Shared.Rules.Wading)
 local Remotes = require(script.Parent.Remotes)
 local Actors = require(script.Parent.Actors)
 type Actor = Actors.Actor
@@ -13,10 +14,40 @@ type Actor = Actors.Actor
 local StatusService = {}
 
 local revealUntil: { [string]: number } = {}
+-- Wading state per actor (Water World knee-deep water). Weak keys: actors
+-- that leave are dropped with their table.
+local wading: { [Actor]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+local MapService: any
 
 local TICK = 0.1
 
-function StatusService.init(_services) end
+function StatusService.init(services)
+	MapService = services.MapService
+end
+
+-- Water spec for the arena in play, or nil when it has no water.
+local function waterSpec(): Wading.Spec?
+	if MapService and MapService.currentArena() == "Water" then
+		return Config.Map.water
+	end
+	return nil
+end
+
+-- Update one actor's wading state from where their feet are.
+local function updateWading(actor: Actor)
+	local root, humanoid = actor.root, actor.humanoid
+	local now = false
+	if root and root.Parent and humanoid then
+		local pos = root.Position
+		local foot = Wading.footY(pos.Y, root.Size.Y, humanoid.HipHeight)
+		local grounded = humanoid.FloorMaterial ~= Enum.Material.Air
+		now = Wading.step(waterSpec(), wading[actor] == true, pos.X, foot, pos.Z, grounded)
+	end
+	if now ~= (wading[actor] == true) then
+		wading[actor] = now
+		actor.model:SetAttribute("Wading", now)
+	end
+end
 
 function StatusService.apply(actor: Actor, kind: Movement.EffectKind, seconds: number, multiplier: number?)
 	table.insert(actor.effects, {
@@ -64,6 +95,7 @@ local function compute(actor: Actor, now: number)
 		jumpMultiplier = jump,
 		effects = actor.effects,
 		now = now,
+		terrainSlow = if wading[actor] then Config.Map.water.speedMultiplier else nil,
 	})
 end
 
@@ -75,6 +107,7 @@ end
 function StatusService.refresh(actor: Actor)
 	local now = Actors.now()
 	actor.effects = Movement.prune(actor.effects, now)
+	updateWading(actor)
 	local r = compute(actor, now)
 	local humanoid: Humanoid = actor.humanoid
 	humanoid.UseJumpPower = true

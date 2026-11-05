@@ -13,8 +13,12 @@
 -- |X| < 50 with a wooden bridge on the main street; the ocean, piers, boats,
 -- islands and a lighthouse lie outside the (invisible) boundary walls.
 --
--- Water inside the field is cosmetic: translucent non-colliding planes a few
--- hundredths of a stud above the sand, so the walkable floor stays at y = 0.
+-- Water inside the field is knee-deep (Jim 2026-11-04): translucent
+-- non-colliding blocks from just above the sand up to Config.Map.water.depth,
+-- so the walkable floor stays at y = 0 and you wade through it. The blocks
+-- cover exactly Config.Map.water.zones (minus the pad-deck holes); Shared/Rules/
+-- Wading reads the same numbers to slow waders. Boats, rings, buoys, ducks,
+-- foam and ripples float at the surface; islands and docks stand above it.
 -- Everything outside the walls is non-colliding scenery.
 local MapBuildings = require(script.Parent.MapBuildings)
 local K = MapBuildings.kit
@@ -94,13 +98,19 @@ local function water(parent: Instance, name: string, x1: number, x2: number, z1:
 	return p
 end
 
--- Rectangle of shallow water with a rectangular hole (pieces around it).
-local function waterWithHole(parent: Instance, name: string, x1: number, x2: number, z1: number, z2: number, hx1: number, hx2: number, hz1: number, hz2: number, y: number, color: Color3, transp: number)
+-- Knee-deep water: a block from just above the sand bed up to `top`.
+local WATER_BOTTOM = 0.08 -- clear of the bed parts (tops <= 0.045) so nothing z-fights
+local function deepWater(parent: Instance, name: string, x1: number, x2: number, z1: number, z2: number, top: number, color: Color3, transp: number): BasePart
+	return water(parent, name, x1, x2, z1, z2, (WATER_BOTTOM + top) / 2, color, transp, top - WATER_BOTTOM)
+end
+
+-- Rectangle of knee-deep water with a rectangular hole (pieces around it).
+local function waterWithHole(parent: Instance, name: string, x1: number, x2: number, z1: number, z2: number, hx1: number, hx2: number, hz1: number, hz2: number, top: number, color: Color3, transp: number)
 	hx1, hx2 = math.max(hx1, x1), math.min(hx2, x2)
 	hz1, hz2 = math.max(hz1, z1), math.min(hz2, z2)
 	local function piece(a1: number, a2: number, b1: number, b2: number)
 		if a2 - a1 > 0.05 and b2 - b1 > 0.05 then
-			water(parent, name, a1, a2, b1, b2, y, color, transp)
+			deepWater(parent, name, a1, a2, b1, b2, top, color, transp)
 		end
 	end
 	piece(x1, x2, z1, hz1)
@@ -927,16 +937,17 @@ local function buildBoardwalks(root: Instance, m: { [string]: any })
 			local px = if xs > 0 then 99 else -91
 			local pz = zs * 50
 			flat(f, "CanalBed", V(18, 0.02, 30), CF(xs * 95, 0.02, zs * 51), LAGOON_DEEP, M.Sand)
-			waterWithHole(f, "CanalWater", x1, x2, z1, z2, px - 5.5, px + 5.5, pz - 5.5, pz + 5.5, 0.07, LAGOON, 0.35)
+			waterWithHole(f, "CanalWater", x1, x2, z1, z2, px - 5.5, px + 5.5, pz - 5.5, pz + 5.5, m.water.depth, LAGOON, 0.35)
 			cyl(f, "PadDeck", V(0.08, 11, 11), CF(px, 0.06, pz) * UP, DECK_LIGHT, M.WoodPlanks).CastShadow = false
+			-- Plank rim at the waterline (walk-through).
 			for _, ex in { x1 - 0.5, x2 + 0.5 } do
-				flat(f, "CanalEdge", V(1, 0.12, 30), CF(ex, 0.06, zs * 51), DECK_DARK, M.Wood)
+				flat(f, "CanalEdge", V(1, 0.12, 30), CF(ex, m.water.depth - 0.04, zs * 51), DECK_DARK, M.Wood)
 			end
 		end
 	end
 	for _, p in pads do
 		-- Rubber duck floating near each pad (scenery, walk-through).
-		local dcf = CF(p[1] + (if p[1] > 0 then -5 else 3), 0, p[2] + (if p[2] > 0 then 10 else -10))
+		local dcf = CF(p[1] + (if p[1] > 0 then -5 else 3), m.water.depth - 0.2, p[2] + (if p[2] > 0 then 10 else -10))
 		ball(f, "RubberDuck", 1.8, dcf * CF(0, 0.85, 0), SUNNY)
 		ball(f, "RubberDuckHead", 1.2, dcf * CF(0, 2, -0.6), SUNNY)
 		deco(f, "RubberDuckBill", V(0.6, 0.25, 0.5), dcf * CF(0, 1.9, -1.3), ORANGE)
@@ -987,22 +998,38 @@ end
 
 -- Lagoon and bridge -----------------------------------------------------------
 
-local function buildLagoon(root: Instance)
+-- Lift a finished island by dy (above the knee-deep water) and give it a
+-- solid sand base with two low steps, so you climb out of the water onto dry
+-- land. The widest step's radius is Config.Map.water.islands[i].r.
+local function raiseIsland(folder: Instance, cx: number, cz: number, diameter: number, dy: number)
+	for _, d in folder:GetDescendants() do
+		if d:IsA("BasePart") then
+			d.CFrame = d.CFrame + V(0, dy, 0)
+		end
+	end
+	local top = dy + 0.1 -- just under the lifted IslandSand top (dy + 0.14), so faces don't fight
+	vcyl(folder, "IslandBase", top, diameter, CF(cx, top / 2, cz), SAND, M.Sand, true)
+	vcyl(folder, "IslandStep", top * 2 / 3, diameter + 2, CF(cx, top / 3, cz), SAND, M.Sand, true)
+	vcyl(folder, "IslandStep", top / 3, diameter + 4, CF(cx, top / 6, cz), WET_SAND, M.Sand, true)
+end
+
+local function buildLagoon(root: Instance, m: { [string]: any })
 	local f = newFolder(root, "Lagoon")
-	local Y = 0.07
+	local D = m.water.depth -- water top (knee-deep)
+	local SURF = D + 0.02 -- foam and ripples lie on the surface
 	-- Bed, deep patches and water: north + south bays and the middle under the bridge.
 	for _, zs in { -1, 1 } do
 		flat(f, "LagoonBed", V(100, 0.02, 43), CF(0, 0.02, zs * 41.5), LAGOON_BED, M.Sand)
 		for _, xs in { -1, 1 } do
 			flat(f, "LagoonDeep", V(24, 0.02, 30), CF(xs * 27, 0.035, zs * 44), LAGOON_DEEP, M.Sand)
 		end
-		water(f, "LagoonWater", -50, 50, if zs > 0 then 20 else -63, if zs > 0 then 63 else -20, Y, LAGOON, 0.35)
+		deepWater(f, "LagoonWater", -50, 50, if zs > 0 then 20 else -63, if zs > 0 then 63 else -20, D, LAGOON, 0.35)
 		-- Foam where the water meets the sand, wet sand beyond.
-		local foamBack = flat(f, "Foam", V(100, 0.03, 0.8), CF(0, 0.1, zs * 62.6), WHITE)
+		local foamBack = flat(f, "Foam", V(100, 0.03, 0.8), CF(0, SURF, zs * 62.6), WHITE)
 		foamBack.Transparency = 0.3
 		flat(f, "WetSand", V(104, 0.02, 2), CF(0, 0.012, zs * 64), WET_SAND, M.Sand)
 		for _, xs in { -1, 1 } do
-			local foam = flat(f, "Foam", V(0.8, 0.03, 28), CF(xs * 49.6, 0.1, zs * 49), WHITE)
+			local foam = flat(f, "Foam", V(0.8, 0.03, 28), CF(xs * 49.6, SURF, zs * 49), WHITE)
 			foam.Transparency = 0.3
 			flat(f, "WetSand", V(2, 0.02, 30), CF(xs * 51.2, 0.012, zs * 50), WET_SAND, M.Sand)
 			-- Low rope fence along the promenade edge (walk-through).
@@ -1013,12 +1040,12 @@ local function buildLagoon(root: Instance)
 		end
 		-- Ripples on the water.
 		for i = 1, 4 do
-			local r = flat(f, "Ripple", V(rrange(4, 9), 0.02, 0.35), CF(rrange(-40, 40), 0.1, zs * rrange(24, 60)) * ry(rrange(-20, 20)), WHITE)
+			local r = flat(f, "Ripple", V(rrange(4, 9), 0.02, 0.35), CF(rrange(-40, 40), SURF, zs * rrange(24, 60)) * ry(rrange(-20, 20)), WHITE)
 			r.Transparency = 0.5
 		end
 	end
 	flat(f, "LagoonBed", V(76, 0.02, 40), CF(0, 0.02, 0), LAGOON_BED, M.Sand)
-	water(f, "LagoonWater", -38, 38, -20, 20, Y, LAGOON, 0.35)
+	deepWater(f, "LagoonWater", -38, 38, -20, 20, D, LAGOON, 0.35)
 
 	-- Sandbars under the burger spawns.
 	for _, zs in { -1, 1 } do
@@ -1041,6 +1068,7 @@ local function buildLagoon(root: Instance)
 	lounger(ni, CF(-2.4, 0.2, 43) * ry(180), WHITE)
 	sandcastle(ni, CF(3, 0.2, 61) * ry(10))
 	starfish(ni, CF(-9, 0.2, 49), CORAL)
+	raiseIsland(ni, 0, 50, 26, D)
 
 	-- South island: beach volleyball.
 	local si = newFolder(f, "SouthIsland")
@@ -1064,28 +1092,33 @@ local function buildLagoon(root: Instance)
 	palm(si, V(9, 0.2, -41.5), 13, -20, 3)
 	crab(si, CF(5, 0.2, -59) * ry(30))
 	shell(si, CF(-6, 0.2, -59), C(255, 200, 210))
+	raiseIsland(si, 0, -50, 28, D)
 
 	-- Docks with moored rowboats, floats and a rubber duck.
 	for _, zs in { -1, 1 } do
 		for _, xs in { -1, 1 } do
 			local dx, dz = xs * 44, zs * 45
-			solid(f, "LagoonDock", V(12, 0.5, 4), CF(dx, 0.35, dz), DECK, M.WoodPlanks)
+			-- Deck above the water (x ±38..48) with a half-height step at the
+			-- shore end (x ±48..50). Config.Map.water.docks covers both.
+			local deckTop = D + 0.1
+			solid(f, "LagoonDock", V(10, 0.5, 4), CF(xs * 43, deckTop - 0.25, dz), DECK, M.WoodPlanks)
+			solid(f, "LagoonDockStep", V(2, deckTop / 2, 4), CF(xs * 49, deckTop / 4, dz), DECK, M.WoodPlanks)
 			for _, ox in { -5.5, 5.5 } do
-				vcyl(f, "DockPost", 2.2, 0.6, CF(dx + ox, 1.1, dz - zs * 2.2), DRIFTWOOD, M.Wood)
+				vcyl(f, "DockPost", 2.2 + D, 0.6, CF(dx + ox, (2.2 + D) / 2, dz - zs * 2.2), DRIFTWOOD, M.Wood)
 			end
 			local col = if xs * zs > 0 then CORAL else TURQ
-			rowboat(f, CF(dx - xs * 1, 0.05, dz - zs * 4.4) * ry(90), WHITE, col)
+			rowboat(f, CF(dx - xs * 1, D - 0.05, dz - zs * 4.4) * ry(90), WHITE, col)
 		end
 	end
 	for _, p in { V(-22, 0, 33), V(24, 0, -27), V(-30, 0, -56) } do
-		cyl(f, "SwimRing", V(0.5, 3, 3), CF(p + V(0, 0.25, 0)) * UP, ORANGE)
-		cyl(f, "SwimRingHole", V(0.55, 1.4, 1.4), CF(p + V(0, 0.25, 0)) * UP, LAGOON)
+		cyl(f, "SwimRing", V(0.5, 3, 3), CF(p + V(0, D + 0.05, 0)) * UP, ORANGE)
+		cyl(f, "SwimRingHole", V(0.55, 1.4, 1.4), CF(p + V(0, D + 0.05, 0)) * UP, LAGOON)
 	end
-	-- Buoy line marking the swim area in the north bay.
+	-- Buoy line marking the swim area in the north bay (half under water).
 	for i = 0, 3 do
-		buoy(f, V(-21 + i * 14, 0, 37), if i % 2 == 0 then CORAL else WHITE, "SwimBuoy")
+		buoy(f, V(-21 + i * 14, D - 0.5, 37), if i % 2 == 0 then CORAL else WHITE, "SwimBuoy")
 	end
-	sign(f, "LagoonSign", V(7, 2.4, 0.3), CF(47, 4.6, 36) * ry(-90), WHITE, "LAGOON\nANKLE DEEP!", SEA_BLUE, C(0, 60, 120), nil, FONT, true)
+	sign(f, "LagoonSign", V(7, 2.4, 0.3), CF(47, 4.6, 36) * ry(-90), WHITE, "LAGOON\nKNEE DEEP!", SEA_BLUE, C(0, 60, 120), nil, FONT, true)
 	deco(f, "LagoonSignPost", V(0.35, 4, 0.35), CF(47, 2, 36), DRIFTWOOD, M.Wood)
 	-- Rocks and shells along the shore corners.
 	for _, p in { V(-48, 0, 62), V(48, 0, 61), V(-47, 0, -62), V(48, 0, -62) } do
@@ -1392,7 +1425,7 @@ function MapWater.buildTheme(folder: Instance, m: { [string]: any })
 	buildBoundary(folder, m)
 	buildGround(folder, m)
 	buildBoardwalks(folder, m)
-	buildLagoon(folder)
+	buildLagoon(folder, m)
 	buildBridge(folder)
 	buildShops(folder)
 	buildBeach(folder)
