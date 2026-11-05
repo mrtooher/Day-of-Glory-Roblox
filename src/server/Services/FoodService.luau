@@ -26,7 +26,7 @@ type Item = {
 
 local FoodService = {}
 
-local MatchService: any, StatusService: any
+local MatchService: any, StatusService: any, GoldenService: any
 local items: { Item } = {}
 local folder: Folder
 
@@ -126,6 +126,7 @@ end
 
 function FoodService.init(services)
 	MatchService, StatusService = services.MatchService, services.StatusService
+	GoldenService = services.GoldenService
 end
 
 local function detach(item: Item)
@@ -199,10 +200,12 @@ function FoodService.resetAll()
 		item.food = FoodState.new(item.food.owner, item.food.foodType)
 		showInPantry(item)
 	end
+	GoldenService.reset()
 end
 
 -- Called when an actor is tagged, yelled at, leaves, or dies.
 function FoodService.dropCarried(actor: Actor)
+	GoldenService.dropCarried(actor)
 	for _, item in items do
 		if item.food.status == "Carried" and item.food.carrier == actor.id then
 			item.food = FoodState.drop(item.food, Actors.now())

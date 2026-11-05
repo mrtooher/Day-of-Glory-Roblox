@@ -72,6 +72,19 @@ function Wading.step(spec: Spec?, prev: boolean, x: number, footY: number, z: nu
 	return footY < spec.depth + Wading.DryClearance
 end
 
+-- Speed multiplier from the water for one actor, or nil for none. A swim ring
+-- (Jim 2026-11-05: orange rings in the lagoon) cancels the slow until
+-- `ringUntil`; splashes still show.
+function Wading.terrainSlow(wading: boolean, ringUntil: number?, now: number, multiplier: number): number?
+	if not wading then
+		return nil
+	end
+	if ringUntil ~= nil and now < ringUntil then
+		return nil
+	end
+	return multiplier
+end
+
 -- Height of the feet from the root part's centre height, its full Y size and
 -- the humanoid's HipHeight.
 function Wading.footY(rootY: number, rootSizeY: number, hipHeight: number): number

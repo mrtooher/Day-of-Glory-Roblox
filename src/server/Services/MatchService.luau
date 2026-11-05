@@ -130,17 +130,24 @@ function MatchService.sendHome(actor: Actor)
 	actor.immuneUntil = Actors.now() + Config.TagImmunitySeconds
 end
 
-function MatchService.awardPoint(team: string, scorer: Actor)
+-- `amount` defaults to 1; the golden burger scores Config.GoldenBurger.points.
+function MatchService.awardPoint(team: string, scorer: Actor, amount: number?)
 	if not MatchService.isPlaying() then
 		return
 	end
 	local won
-	scores, won = Scoring.award(scores, team, Config.PointsToWin)
-	Remotes.announce(string.format("%s scored for %s! (%d/%d)", scorer.name, team, scores[team], Config.PointsToWin))
+	scores, won = Scoring.award(scores, team, Config.PointsToWin, amount)
+	local what = if (amount or 1) > 1 then string.format("the GOLDEN BURGER (+%d)", amount :: number) else ""
+	Remotes.announce(string.format("%s scored %sfor %s! (%d/%d)", scorer.name, if what ~= "" then what .. " " else "", Config.teamName(team), scores[team], Config.PointsToWin))
 	if won then
 		forcedEnd = true
 	end
 	publish()
+end
+
+-- Seconds since the current match started (0 when not playing).
+function MatchService.elapsed(): number
+	return if MatchService.isPlaying() then Actors.now() - matchStartedAt else 0
 end
 
 local function startMatch(now: number)

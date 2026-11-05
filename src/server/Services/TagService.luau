@@ -12,13 +12,14 @@ type Actor = Actors.Actor
 
 local TagService = {}
 
-local MatchService: any, FoodService: any, StatusService: any
+local MatchService: any, FoodService: any, StatusService: any, GoldenService: any
 
 local TICK = 0.1
 
 function TagService.init(services)
 	MatchService = services.MatchService
 	FoodService, StatusService = services.FoodService, services.StatusService
+	GoldenService = services.GoldenService
 end
 
 local function tagView(actor: Actor, now: number): TagResolution.Tagger
@@ -28,6 +29,7 @@ local function tagView(actor: Actor, now: number): TagResolution.Tagger
 		vanished = Actors.isVanished(actor, now),
 		immune = Actors.isImmune(actor, now),
 		disabled = not StatusService.canAct(actor),
+		anywhere = Config.GoldenBurger.taggableAnywhere and GoldenService.isCarrier(actor),
 	}
 end
 

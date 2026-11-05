@@ -188,7 +188,34 @@ Config.Map = {
 			{ x = 0, z = 50, r = 15 }, -- north island (palms, hammock), lowest step included
 			{ x = 0, z = -50, r = 16 }, -- south island (volleyball)
 		},
+		-- Swim-ring pickups (Jim 2026-11-05): grab one for 8 s with no water
+		-- slow. Mirrored across x = 0; they come back after respawnSeconds.
+		swimRing = {
+			seconds = 8,
+			respawnSeconds = 20,
+			radius = 4, -- horizontal studs from the ring to grab it
+			spots = {
+				{ x = -20, z = 38 },
+				{ x = 20, z = 38 },
+				{ x = -20, z = -38 },
+				{ x = 20, z = -38 },
+			},
+		},
 	},
+}
+
+-- Golden Burger (Jim 2026-11-05): once a match, 3 minutes in, a golden
+-- burger appears on the bridge (both arenas). Anyone can grab it; bringing it
+-- to your own drop-off scores `points`. Dropped, it waits droppedSeconds,
+-- then goes back to the bridge. taggableAnywhere: its carrier can be tagged
+-- by any enemy, not only in the enemy's half (otherwise grabbing it and
+-- running home would be a free 2 points).
+Config.GoldenBurger = {
+	appearAfterSeconds = 3 * 60,
+	points = 2,
+	droppedSeconds = 10,
+	pickupRadius = 4,
+	taggableAnywhere = true,
 }
 
 -- Arenas (Jim 2026-11-04): same kitchens, rooftop food and pads in every

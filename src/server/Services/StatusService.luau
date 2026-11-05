@@ -85,6 +85,12 @@ function StatusService.isRevealedTo(team: string, now: number): boolean
 	return now < (revealUntil[team] or 0)
 end
 
+-- Swim ring (PickupService sets it): no water slow until this time.
+local function swimRingUntil(actor: Actor): number?
+	local v = actor.model:GetAttribute("SwimRingUntil")
+	return if type(v) == "number" then v else nil
+end
+
 local function compute(actor: Actor, now: number)
 	local jump = if actor.characterId == "Pim" then Config.Powers.SlowMo.passiveJumpMultiplier else 1
 	return Movement.compute({
@@ -95,7 +101,7 @@ local function compute(actor: Actor, now: number)
 		jumpMultiplier = jump,
 		effects = actor.effects,
 		now = now,
-		terrainSlow = if wading[actor] then Config.Map.water.speedMultiplier else nil,
+		terrainSlow = Wading.terrainSlow(wading[actor] == true, swimRingUntil(actor), now, Config.Map.water.speedMultiplier),
 	})
 end
 

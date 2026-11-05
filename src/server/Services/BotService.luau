@@ -11,12 +11,13 @@ local Config = require(ReplicatedStorage.Shared.Config)
 local TeamPick = require(ReplicatedStorage.Shared.Rules.TeamPick)
 local BotBrain = require(ReplicatedStorage.Shared.Rules.BotBrain)
 local MapService = require(script.Parent.MapService)
+local BotAnimation = require(script.Parent.BotAnimation)
 local Actors = require(script.Parent.Actors)
 type Actor = Actors.Actor
 
 local BotService = {}
 
-local MatchService: any, FoodService: any, PowerService: any, StatusService: any, CharacterService: any
+local MatchService: any, FoodService: any, PowerService: any, StatusService: any, CharacterService: any, GoldenService: any
 
 local folder: Folder
 local started = false
@@ -44,6 +45,7 @@ function BotService.init(services)
 	MatchService = services.MatchService
 	FoodService, PowerService = services.FoodService, services.PowerService
 	StatusService, CharacterService = services.StatusService, services.CharacterService
+	GoldenService = services.GoldenService
 end
 
 local function botsOn(team: string): { Actor }
@@ -112,6 +114,20 @@ local function nearest(from: Vector3, points: { Vector3 }): Vector3?
 	return best
 end
 
+-- The one raider bot per team that goes for the golden burger: the closest.
+local function goldenChaser(team: string, golden: Vector3): Actor?
+	local best, bestDist = nil, math.huge
+	for _, b in botsOn(team) do
+		if b.role ~= "defender" and not b.carrying and b.humanoid.Health > 0 then
+			local d = (Actors.position(b) - golden).Magnitude
+			if d < bestDist then
+				best, bestDist = b, d
+			end
+		end
+	end
+	return best
+end
+
 local function think(bot: Actor, path: Path)
 	local now = Actors.now()
 	local pos = Actors.position(bot)
@@ -141,6 +157,13 @@ local function think(bot: Actor, path: Path)
 		if d < bestRaid then
 			bestRaid, raidTarget, raidOnRoof = d, f.position, f.onRoof
 		end
+	end
+
+	-- Golden burger lying on the bridge (or dropped): the team's closest
+	-- raider goes for it instead of the enemy kitchen.
+	local golden = GoldenService.targetPosition()
+	if golden and not bot.carrying and goldenChaser(bot.team, golden) == bot then
+		raidTarget, raidOnRoof = golden, false
 	end
 
 	local decision = BotBrain.decide({
@@ -264,6 +287,7 @@ local function spawnBot(team: string)
 	root:SetNetworkOwner(nil) -- server drives bots
 	Actors.add(bot)
 	CharacterService.setCharacter(bot, characterId)
+	BotAnimation.attach(model, humanoid, root)
 
 	humanoid.Died:Connect(function()
 		despawn(bot)
