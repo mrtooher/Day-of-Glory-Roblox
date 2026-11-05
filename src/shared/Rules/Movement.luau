@@ -18,6 +18,7 @@ export type Params = {
 	jumpMultiplier: number,
 	effects: { Effect },
 	now: number,
+	terrainSlow: number?, -- e.g. wading in Water World; counts as a slow (strongest wins)
 }
 
 export type Result = {
@@ -39,7 +40,7 @@ function Movement.prune(effects: { Effect }, now: number): { Effect }
 end
 
 function Movement.compute(p: Params): Result
-	local slow, boost = 1, 1
+	local slow, boost = p.terrainSlow or 1, 1
 	local disabled = false
 
 	for _, e in p.effects do

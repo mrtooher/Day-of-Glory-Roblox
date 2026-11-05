@@ -26,6 +26,8 @@ local specs: { [string]: any } = {
 	["Rules/Beacon.spec"] = require("./Rules/Beacon.spec"),
 	["Rules/HowTo.spec"] = require("./Rules/HowTo.spec"),
 	["Rules/ArenaVote.spec"] = require("./Rules/ArenaVote.spec"),
+	["Rules/Wading.spec"] = require("./Rules/Wading.spec"),
+	["Rules/PowerLayout.spec"] = require("./Rules/PowerLayout.spec"),
 	["Config.spec"] = require("./Config.spec"),
 	["Looks.spec"] = require("./Looks.spec"),
 }

@@ -385,6 +385,129 @@ for _, w in { "WallNorth", "WallSouth", "WallEast", "WallWest" } do
 	check(p ~= nil and p:IsA("BasePart") and p.CanCollide and p.Size.Y >= (m.wallHeight or 20) - 0.01, w .. " collidable and >= wallHeight tall")
 end
 
+-- Water World wading (2026-11-04): the water you see must be the water that
+-- slows you (Config.Map.water, Shared/Rules/Wading).
+if themeId == "Water" then
+	local w = m.water
+	check(w ~= nil, "Config.Map.water exists")
+	local depth = w.depth
+	local function inside(minV, maxV, r)
+		return minV.X >= r.x1 - EPS and maxV.X <= r.x2 + EPS and minV.Z >= r.z1 - EPS and maxV.Z <= r.z2 + EPS
+	end
+	local function overlap(a1, a2, b1, b2)
+		return math.max(0, math.min(a2, b2) - math.max(a1, b1))
+	end
+	local covered = {}
+	for i in w.zones do
+		covered[i] = 0
+	end
+	local waterParts, badTop, badBottom, stray = 0, 0, 0, 0
+	for _, p in parts do
+		if p.Name == "LagoonWater" or p.Name == "CanalWater" then
+			waterParts += 1
+			local minV, maxV = aabb(p)
+			if math.abs(maxV.Y - depth) > 0.02 then
+				badTop += 1
+				print("  water top " .. string.format("%.3f", maxV.Y) .. " at " .. tostring(position(p)))
+			end
+			if minV.Y < 0.06 then
+				badBottom += 1
+			end
+			local home = nil
+			for i, r in w.zones do
+				if inside(minV, maxV, r) then
+					home = i
+					break
+				end
+			end
+			if home then
+				covered[home] += (maxV.X - minV.X) * (maxV.Z - minV.Z)
+			else
+				stray += 1
+				print("  water outside every zone at " .. tostring(position(p)))
+			end
+		end
+	end
+	-- No two water blocks overlap: with every block inside a zone and the
+	-- areas adding up, that means each zone is covered exactly once.
+	local blocks = {}
+	for _, p in parts do
+		if p.Name == "LagoonWater" or p.Name == "CanalWater" then
+			local minV, maxV = aabb(p)
+			table.insert(blocks, { minV, maxV })
+		end
+	end
+	local overlaps = 0
+	for i = 1, #blocks do
+		for j = i + 1, #blocks do
+			local a, b = blocks[i], blocks[j]
+			if overlap(a[1].X, a[2].X, b[1].X, b[2].X) > EPS and overlap(a[1].Z, a[2].Z, b[1].Z, b[2].Z) > EPS then
+				overlaps += 1
+			end
+		end
+	end
+	check(overlaps == 0, "water blocks don't overlap each other (" .. overlaps .. " pairs)")
+	check(waterParts >= 7, "at least 7 in-field water parts (got " .. waterParts .. ")")
+	check(badTop == 0, "every water part's top at depth " .. depth .. " (" .. badTop .. " off)")
+	check(badBottom == 0, "water bottoms clear the sand bed, y >= 0.06 (" .. badBottom .. " too low)")
+	check(stray == 0, "every water part inside a Config zone (" .. stray .. " outside)")
+	for i, r in w.zones do
+		local area = (r.x2 - r.x1) * (r.z2 - r.z1)
+		for _, h in w.holes do
+			area -= overlap(r.x1, r.x2, h.x1, h.x2) * overlap(r.z1, r.z2, h.z1, h.z2)
+		end
+		check(math.abs(covered[i] - area) < 0.5, string.format("zone %d fully drawn (water %.1f vs zone %.1f)", i, covered[i], area))
+	end
+	-- Islands and docks stand above the water so standing on them is dry.
+	for i, c in w.islands do
+		local top = -math.huge
+		for _, p in parts do
+			if p.CanCollide and string.sub(p.Name, 1, 6) == "Island" then
+				local minV, maxV = aabb(p)
+				if minV.X <= c.x and maxV.X >= c.x and minV.Z <= c.z and maxV.Z >= c.z then
+					top = math.max(top, maxV.Y)
+				end
+			end
+		end
+		check(top >= depth, string.format("island %d has a collidable top at or above the water (top %.2f)", i, top))
+		-- The dry circle in Config must match the widest collidable step built.
+		local widest = 0
+		for _, p in parts do
+			if p.CanCollide and string.sub(p.Name, 1, 6) == "Island" then
+				local minV, maxV = aabb(p)
+				local cx, cz = (minV.X + maxV.X) / 2, (minV.Z + maxV.Z) / 2
+				if math.abs(cx - c.x) < 0.1 and math.abs(cz - c.z) < 0.1 then
+					widest = math.max(widest, (maxV.X - minV.X) / 2)
+				end
+			end
+		end
+		check(math.abs(widest - c.r) < 0.05, string.format("island %d: Config radius %.2f matches widest step %.2f", i, c.r, widest))
+	end
+	local docks, lowDocks = 0, 0
+	for _, p in parts do
+		if p.Name == "LagoonDock" then
+			docks += 1
+			local _, maxV = aabb(p)
+			if not p.CanCollide or maxV.Y <= depth then
+				lowDocks += 1
+			end
+		end
+	end
+	check(docks == 4 and lowDocks == 0, "4 collidable docks above the water (" .. docks .. " docks, " .. lowDocks .. " low)")
+	-- Floating props ride on the surface, not on the bed.
+	local sunk = 0
+	for _, p in parts do
+		if p.Name == "SwimRing" or p.Name == "SwimBuoy" or p.Name == "RubberDuck" or p.Name == "Ripple" or p.Name == "Foam" then
+			local minV, maxV = aabb(p)
+			if maxV.Y < depth then
+				sunk += 1
+				print("  sunk prop " .. p.Name .. " top " .. string.format("%.2f", maxV.Y))
+			end
+		end
+	end
+	check(sunk == 0, "floating props sit at the surface (" .. sunk .. " sunk)")
+end
+
 local signs = 0
 for _, d in folder:GetDescendants() do
 	if d:IsA("SurfaceGui") or d:IsA("BillboardGui") then

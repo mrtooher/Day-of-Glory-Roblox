@@ -153,6 +153,42 @@ Config.Map = {
 	spawnX = 190,
 	spawnZ = 0,
 	burgerSpawns = { { x = 0, z = 30 }, { x = 0, z = -30 } },
+	-- Water World wading (Jim 2026-11-04: water should do something). Knee-deep
+	-- water over the normal ground; walking through it slows you. MapWater
+	-- draws the water from these zones and Shared/Rules/Wading reads the same
+	-- numbers, so what you see is what slows you.
+	water = {
+		depth = 1.2, -- water top above the sand, studs
+		speedMultiplier = 0.7, -- counts as a slow: strongest slow wins
+		zones = {
+			{ x1 = -50, x2 = 50, z1 = 20, z2 = 63 }, -- north bay
+			{ x1 = -50, x2 = 50, z1 = -63, z2 = -20 }, -- south bay
+			{ x1 = -38, x2 = 38, z1 = -20, z2 = 20 }, -- under the bridge
+			{ x1 = 86, x2 = 104, z1 = 36, z2 = 66 }, -- canals in the side streets
+			{ x1 = 86, x2 = 104, z1 = -66, z2 = -36 },
+			{ x1 = -104, x2 = -86, z1 = 36, z2 = 66 },
+			{ x1 = -104, x2 = -86, z1 = -66, z2 = -36 },
+		},
+		holes = {
+			-- Round decks under the canal jump pads (11 across).
+			{ x1 = 93.5, x2 = 104.5, z1 = 44.5, z2 = 55.5 },
+			{ x1 = 93.5, x2 = 104.5, z1 = -55.5, z2 = -44.5 },
+			{ x1 = -96.5, x2 = -85.5, z1 = 44.5, z2 = 55.5 },
+			{ x1 = -96.5, x2 = -85.5, z1 = -55.5, z2 = -44.5 },
+		},
+		-- Lagoon docks (step + deck, shore to x ±38): water is drawn under
+		-- them, but standing on one is dry.
+		docks = {
+			{ x1 = 38, x2 = 50, z1 = 43, z2 = 47 },
+			{ x1 = 38, x2 = 50, z1 = -47, z2 = -43 },
+			{ x1 = -50, x2 = -38, z1 = 43, z2 = 47 },
+			{ x1 = -50, x2 = -38, z1 = -47, z2 = -43 },
+		},
+		islands = {
+			{ x = 0, z = 50, r = 15 }, -- north island (palms, hammock), lowest step included
+			{ x = 0, z = -50, r = 16 }, -- south island (volleyball)
+		},
+	},
 }
 
 -- Arenas (Jim 2026-11-04): same kitchens, rooftop food and pads in every
